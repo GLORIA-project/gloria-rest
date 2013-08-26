@@ -9,10 +9,14 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -127,6 +131,49 @@ public class Experiments extends CORSResource {
 		}
 	}
 
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/online/slots/available/{year}/{month}/{day}")
+	public Response listAvailableTimeSlots(@PathParam("year") String year,
+			@PathParam("month") String month, @PathParam("day") String day,
+			ListAvailableTimeSlotsRequest data) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			List<TimeSlot> timeSlots = experiments.getAvailableReservations(
+					data.getExperiment(), data.getTelescopes());
+
+			Calendar calendar = Calendar.getInstance();
+			List<TimeSlot> filteredTimeSlots = new ArrayList<>();
+
+			for (TimeSlot timeSlot : timeSlots) {
+				calendar.setTime(timeSlot.getBegin());
+				if (calendar.get(Calendar.DAY_OF_MONTH) == Integer.valueOf(day)
+						&& calendar.get(Calendar.MONTH) == Integer
+								.valueOf(month)
+						&& calendar.get(Calendar.YEAR) == Integer.valueOf(year)) {
+
+					filteredTimeSlots.add(timeSlot);
+
+				}
+			}
+
+			return this.makeCORS(Response.ok(filteredTimeSlots));
+		} catch (OnlineExperimentException e) {
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
+		} catch (ExperimentReservationArgumentException e) {
+			return this.makeCORS(Response.status(Status.BAD_REQUEST).entity(
+					e.getMessage()));
+		}
+	}
+
 	@GET
 	@Path("/online/reserve/{experiment}")
 	public Response reserveExperiment(
@@ -161,14 +208,14 @@ public class Experiments extends CORSResource {
 		} catch (OnlineExperimentException e) {
 			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (NoReservationsAvailableException e) {
-			return this.makeCORS(Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()));
+			return this.makeCORS(Response.status(Status.NOT_ACCEPTABLE).entity(
+					e.getMessage()));
 		} catch (ExperimentReservationArgumentException e) {
-			return this.makeCORS(Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()));
+			return this.makeCORS(Response.status(Status.NOT_ACCEPTABLE).entity(
+					e.getMessage()));
 		} catch (MaxReservationTimeException e) {
-			return this.makeCORS(Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()));
+			return this.makeCORS(Response.status(Status.NOT_ACCEPTABLE).entity(
+					e.getMessage()));
 		}
 	}
 }
