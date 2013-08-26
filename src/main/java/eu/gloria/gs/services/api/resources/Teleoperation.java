@@ -41,7 +41,7 @@ import eu.gloria.gs.services.teleoperation.scam.SCamTeleoperationInterface;
  * 
  */
 @Path("/teleoperation")
-public class Teleoperation {
+public class Teleoperation extends CORSResource {
 
 	@Context
 	HttpServletRequest request;
@@ -82,12 +82,12 @@ public class Teleoperation {
 		try {
 			List<String> filterList = filters.getFilters(rt, fw);
 
-			return Response.ok(filterList).build();
+			return this.makeCORS(Response.ok(filterList));
 		} catch (FilterWheelTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -112,10 +112,10 @@ public class Teleoperation {
 				generics.notifyTeleoperation(rt, seconds);
 			}
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (GenericTeleoperationException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -135,10 +135,10 @@ public class Teleoperation {
 
 			generics.stopTeleoperation(rt);
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (GenericTeleoperationException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -162,12 +162,12 @@ public class Teleoperation {
 		try {
 			focusers.moveRelative(rt, focus, steps);
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (FocuserTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -189,13 +189,13 @@ public class Teleoperation {
 		try {
 			String id = ccds.startContinueMode(rt, ccd);
 
-			return Response.ok(id).build();
+			return this.makeCORS(Response.ok(id));
 
 		} catch (CCDTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -222,10 +222,10 @@ public class Teleoperation {
 			try {
 				ccds.setExposureTime(rt, ccd, exposure);
 			} catch (CCDTeleoperationException e) {
-				return Response.serverError().entity(e.getMessage()).build();
+				return this.makeCORS(Response.serverError().entity(e.getMessage()));
 			} catch (DeviceOperationFailedException e) {
-				return Response.status(Status.INTERNAL_SERVER_ERROR)
-						.entity(e.getMessage()).build();
+				return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+						.entity(e.getMessage()));
 			}
 		}
 
@@ -234,10 +234,10 @@ public class Teleoperation {
 			try {
 				ccds.setBrightness(rt, ccd, brightness);
 			} catch (CCDTeleoperationException e) {
-				return Response.serverError().entity(e.getMessage()).build();
+				return this.makeCORS(Response.serverError().entity(e.getMessage()));
 			} catch (DeviceOperationFailedException e) {
-				return Response.status(Status.INTERNAL_SERVER_ERROR)
-						.entity(e.getMessage()).build();
+				return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+						.entity(e.getMessage()));
 			}
 		}
 
@@ -246,10 +246,10 @@ public class Teleoperation {
 			try {
 				ccds.setGamma(rt, ccd, gamma);
 			} catch (CCDTeleoperationException e) {
-				return Response.serverError().entity(e.getMessage()).build();
+				return this.makeCORS(Response.serverError().entity(e.getMessage()));
 			} catch (DeviceOperationFailedException e) {
-				return Response.status(Status.INTERNAL_SERVER_ERROR)
-						.entity(e.getMessage()).build();
+				return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+						.entity(e.getMessage()));
 			}
 		}
 
@@ -258,10 +258,10 @@ public class Teleoperation {
 			try {
 				ccds.setGain(rt, ccd, gain);
 			} catch (CCDTeleoperationException e) {
-				return Response.serverError().entity(e.getMessage()).build();
+				return this.makeCORS(Response.serverError().entity(e.getMessage()));
 			} catch (DeviceOperationFailedException e) {
-				return Response.status(Status.INTERNAL_SERVER_ERROR)
-						.entity(e.getMessage()).build();
+				return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+						.entity(e.getMessage()));
 			}
 		}
 
@@ -274,15 +274,15 @@ public class Teleoperation {
 						+ ", \"gamma\":" + ccds.getGamma(rt, ccd)
 						+ ", \"gain\":" + ccds.getGain(rt, ccd) + "}";
 			} catch (CCDTeleoperationException e) {
-				return Response.serverError().entity(e.getMessage()).build();
+				return this.makeCORS(Response.serverError().entity(e.getMessage()));
 			} catch (DeviceOperationFailedException e) {
-				return Response.status(Status.INTERNAL_SERVER_ERROR)
-						.entity(e.getMessage()).build();
+				return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+						.entity(e.getMessage()));
 			}
 
-			return Response.ok(response).build();
+			return this.makeCORS(Response.ok(response));
 		} else {
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		}
 	}
 
@@ -308,13 +308,13 @@ public class Teleoperation {
 			}
 			String id = ccds.startExposure(rt, ccd);
 
-			return Response.ok(id).build();
+			return this.makeCORS(Response.ok(id));
 
 		} catch (CCDTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -342,12 +342,12 @@ public class Teleoperation {
 			String url = ccds.getImageURL(rt, ccd, lid,
 					ImageExtensionFormat.valueOf(format));
 
-			return Response.ok(url).build();
+			return this.makeCORS(Response.ok(url));
 		} catch (CCDTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (ImageNotAvailableException e) {
-			return Response.status(Status.NOT_FOUND).entity(e.getMessage())
-					.build();
+			return this.makeCORS(Response.status(Status.NOT_FOUND).entity(e.getMessage())
+					);
 		}
 	}
 
@@ -367,12 +367,12 @@ public class Teleoperation {
 		try {
 			ccds.stopContinueMode(rt, ccd.replace("-", " "));
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (CCDTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -392,12 +392,12 @@ public class Teleoperation {
 		try {
 			String url = scams.getImageURL(rt, scam);
 
-			return Response.ok(url).build();
+			return this.makeCORS(Response.ok(url));
 		} catch (SCamTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -417,12 +417,12 @@ public class Teleoperation {
 		try {
 			mounts.slewToObject(rt, mount, object);
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (MountTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -441,12 +441,12 @@ public class Teleoperation {
 		try {
 			mounts.park(rt, mount);
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (MountTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -466,12 +466,12 @@ public class Teleoperation {
 		try {
 			mounts.slewToCoordinates(rt, mount, ra, dec);
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (MountTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -499,12 +499,12 @@ public class Teleoperation {
 				mounts.moveWest(rt, mount);
 			}
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (MountTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -527,12 +527,12 @@ public class Teleoperation {
 				// String currentRate = mounts.getSlewRate(rt, mount);
 			}
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (MountTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -551,12 +551,12 @@ public class Teleoperation {
 		try {
 			domes.open(rt, dome);
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (DomeTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -575,12 +575,12 @@ public class Teleoperation {
 		try {
 			domes.close(rt, dome);
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (DomeTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -599,12 +599,12 @@ public class Teleoperation {
 		try {
 			domes.park(rt, dome);
 
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 		} catch (DomeTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 
@@ -624,12 +624,12 @@ public class Teleoperation {
 		try {
 			double azimuth = domes.getAzimuth(rt, dome);
 
-			return Response.ok(azimuth).build();
+			return this.makeCORS(Response.ok(azimuth));
 		} catch (DomeTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()));
 		}
 	}
 }

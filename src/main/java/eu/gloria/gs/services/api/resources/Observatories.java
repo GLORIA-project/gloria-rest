@@ -29,7 +29,7 @@ import eu.gloria.gs.services.repository.rt.data.ObservatoryInformation;
  * 
  */
 @Path("/observatories")
-public class Observatories {
+public class Observatories extends CORSResource {
 
 	@Context
 	HttpServletRequest request;
@@ -68,13 +68,13 @@ public class Observatories {
 					observatories.add(obsInfo);
 				}
 
-				return Response.ok(observatories).build();
+				return this.makeCORS(Response.ok(observatories));
 			} else {
-				return Response.ok(names).build();
+				return this.makeCORS(Response.ok(names));
 			}
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		}
 	}
 
@@ -95,10 +95,10 @@ public class Observatories {
 		try {
 			ObservatoryInformation obsInfo = telescopes
 					.getObservatoryInformation(name);
-			return Response.ok(obsInfo).build();
+			return this.makeCORS(Response.ok(obsInfo));
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		}
 	}
 
@@ -118,10 +118,10 @@ public class Observatories {
 
 		try {
 			telescopes.registerObservatory(name, city, country);
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		}
 	}
 
@@ -141,10 +141,10 @@ public class Observatories {
 
 		try {
 			List<String> rtNames = telescopes.getAllRTInObservatory(name);
-			return Response.ok(rtNames).build();
+			return this.makeCORS(Response.ok(rtNames));
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		}
 	}
 
@@ -165,10 +165,10 @@ public class Observatories {
 
 		try {
 			telescopes.setRTObservatory(rt, name);
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		}
 	}
 }

@@ -15,12 +15,12 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import com.google.gson.Gson;
 import com.sun.jersey.spi.resource.Singleton;
 
 import eu.gloria.gs.services.core.client.GSClientProvider;
@@ -35,7 +35,7 @@ import eu.gloria.gs.services.repository.image.data.ImageInformation;
 
 @Singleton
 @Path("/images")
-public class Images {
+public class Images extends CORSResource {
 
 	@Context
 	HttpServletRequest request;
@@ -45,7 +45,7 @@ public class Images {
 	static {
 		GSClientProvider.setHost("saturno.datsi.fi.upm.es");
 		GSClientProvider.setPort("8443");
-		
+
 		images = GSClientProvider.getImageRepositoryClient();
 	}
 
@@ -70,20 +70,23 @@ public class Images {
 			List<Integer> ids = images.getAllImageIdentifiersByDate(
 					calendar.getTime(), new Date());
 
-			return Response.ok(ids).build();
+			return this.makeCORS(Response.ok(ids));
 
 		} catch (ImageRepositoryException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		return Response.ok(new ArrayList<Integer>()).build();
+		return this.makeCORS(Response.ok(new ArrayList<Integer>()));
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/list/{year}/{month}/{day}")
-	public Response listDateImages(@PathParam("year") String year, @PathParam("month") String month, @PathParam("day") String day) {
+	public Response listDateImages(@PathParam("year") String year,
+			@PathParam("month") String month, @PathParam("day") String day,
+			@QueryParam("complete") boolean complete,
+			@QueryParam("maxResults") Integer maxResults) {
 
 		if (request.getAttribute("user") != null) {
 
@@ -99,28 +102,48 @@ public class Images {
 			calendar.set(Calendar.YEAR, Integer.valueOf(year));
 			calendar.set(Calendar.HOUR_OF_DAY, 0);
 			calendar.set(Calendar.MINUTE, 0);
-			
+
 			Date fromDate = calendar.getTime();
-			
+
 			calendar.set(Calendar.HOUR_OF_DAY, 23);
 			calendar.set(Calendar.MINUTE, 59);
 			calendar.set(Calendar.SECOND, 59);
-			
-			Date toDate = calendar.getTime();
-			
-			List<Integer> ids = images.getAllImageIdentifiersByDate(
-					fromDate, toDate);
 
-			return Response.ok(ids).build();
+			Date toDate = calendar.getTime();
+
+			List<Integer> ids = images.getAllImageIdentifiersByDate(fromDate,
+					toDate);
+
+			if (ids == null) {
+				ids = new ArrayList<>();
+			}
+
+			if (maxResults != null) {
+				ids = ids.subList(0, Math.min(ids.size(), maxResults));
+			}
+
+			if (!complete) {
+				return this.makeCORS(Response.ok(ids));
+			} else {
+				ArrayList<ImageInformation> imageInfos = new ArrayList<>();
+
+				for (Integer id : ids) {
+					ImageInformation imageInfo = images
+							.getImageInformation(Integer.valueOf(id));
+					imageInfos.add(imageInfo);
+				}
+
+				return this.makeCORS(Response.ok(imageInfos));
+			}
 
 		} catch (ImageRepositoryException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		return Response.ok(new ArrayList<Integer>()).build();
+		return this.makeCORS(Response.ok(new ArrayList<Integer>()));
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{imageId}")
@@ -134,17 +157,18 @@ public class Images {
 		}
 
 		try {
-			
-			ImageInformation imageInfo = images.getImageInformation(Integer.valueOf(id));
-			
-			return Response.ok(imageInfo).build();
+
+			ImageInformation imageInfo = images.getImageInformation(Integer
+					.valueOf(id));
+
+			return this.makeCORS(Response.ok(imageInfo));
 
 		} catch (ImageRepositoryException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		return Response.status(Status.BAD_REQUEST).build();
+		return this.makeCORS(Response.status(Status.BAD_REQUEST));
 	}
 
 }

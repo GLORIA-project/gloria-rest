@@ -35,7 +35,7 @@ import eu.gloria.gs.services.experiment.online.OnlineExperimentInterface;
  * 
  */
 @Path("/experiments")
-public class Experiments {
+public class Experiments extends CORSResource {
 
 	@Context
 	HttpServletRequest request;
@@ -70,10 +70,10 @@ public class Experiments {
 		try {
 			List<String> names = experiments.getAllOnlineExperiments();
 
-			return Response.ok(names).build();
+			return this.makeCORS(Response.ok(names));
 
 		} catch (OnlineExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		}
 	}
 
@@ -93,12 +93,12 @@ public class Experiments {
 			List<ReservationInformation> reservations = experiments
 					.getMyCurrentReservations();
 
-			return Response.ok(reservations).build();
+			return this.makeCORS(Response.ok(reservations));
 
 		} catch (OnlineExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (NoReservationsAvailableException e) {
-			return Response.ok(new ArrayList<String>()).build();
+			return this.makeCORS(Response.ok(new ArrayList<String>()));
 		}
 	}
 
@@ -118,12 +118,12 @@ public class Experiments {
 			List<ReservationInformation> reservations = experiments
 					.getMyPendingReservations();
 
-			return Response.ok(reservations).build();
+			return this.makeCORS(Response.ok(reservations));
 
 		} catch (OnlineExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (NoReservationsAvailableException e) {
-			return Response.ok(new ArrayList<String>()).build();
+			return this.makeCORS(Response.ok(new ArrayList<String>()));
 		}
 	}
 
@@ -151,24 +151,24 @@ public class Experiments {
 				ts.setBegin(format.parse(from));
 				ts.setEnd(format.parse(to));
 			} catch (ParseException e) {
-				return Response.status(Status.BAD_REQUEST)
-						.entity(e.getMessage()).build();
+				return this.makeCORS(Response.status(Status.BAD_REQUEST)
+						.entity(e.getMessage()));
 			}
 
 			experiments.reserveExperiment(experiment, rts, ts);
-			return Response.ok().build();
+			return this.makeCORS(Response.ok());
 
 		} catch (OnlineExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.makeCORS(Response.serverError().entity(e.getMessage()));
 		} catch (NoReservationsAvailableException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()));
 		} catch (ExperimentReservationArgumentException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()));
 		} catch (MaxReservationTimeException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.makeCORS(Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()));
 		}
 	}
 }
