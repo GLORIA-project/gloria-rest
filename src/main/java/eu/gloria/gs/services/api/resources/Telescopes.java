@@ -147,7 +147,7 @@ public class Telescopes {
 	public Response registerTelescope(@PathParam("name") String name,
 			@QueryParam("from") String from, @QueryParam("to") String to, RTAvailability availability) {
 
-		if (request.getAttribute("user") != null) {
+		/*if (request.getAttribute("user") != null) {
 
 			GSClientProvider.setCredentials(
 					(String) request.getAttribute("user"),
@@ -179,6 +179,8 @@ public class Telescopes {
 
 		} catch (RTRepositoryException e) {
 			return Response.serverError().entity(e.getMessage()).build();
-		}
+		}*/
+		
+		return Response.ok().build();
 	}
 }
