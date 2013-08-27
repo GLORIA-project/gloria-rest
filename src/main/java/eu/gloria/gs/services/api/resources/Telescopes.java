@@ -31,7 +31,7 @@ import eu.gloria.gs.services.repository.rt.data.RTAvailability;
  * 
  */
 @Path("/telescopes")
-public class Telescopes  extends CORSResource {
+public class Telescopes {
 
 	@Context
 	HttpServletRequest request;
@@ -39,7 +39,7 @@ public class Telescopes  extends CORSResource {
 	private static RTRepositoryInterface telescopes;
 
 	static {
-		GSClientProvider.setHost("saturno.datsi.fi.upm.es");
+		GSClientProvider.setHost("localhost");
 		GSClientProvider.setPort("8443");
 		telescopes = GSClientProvider.getRTRepositoryClient();
 	}
@@ -77,13 +77,13 @@ public class Telescopes  extends CORSResource {
 					devices.add(devInfo);
 				}
 
-				return this.makeCORS(Response.ok(devices));
+				return Response.ok(devices).build();
 			} else {
-				return this.makeCORS(Response.ok(names));
+				return Response.ok(names).build();
 			}
 
 		} catch (RTRepositoryException e) {
-			return this.makeCORS(Response.serverError().entity(e.getMessage()));
+			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
 
@@ -105,10 +105,10 @@ public class Telescopes  extends CORSResource {
 		try {
 			DeviceInformation devInfo = telescopes.getRTDeviceInformation(name,
 					device);
-			return this.makeCORS(Response.ok(devInfo));
+			return Response.ok(devInfo).build();
 
 		} catch (RTRepositoryException e) {
-			return this.makeCORS(Response.serverError().entity(e.getMessage()));
+			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
 
@@ -129,10 +129,10 @@ public class Telescopes  extends CORSResource {
 
 		try {
 			telescopes.registerRT(name, owner, url, user, password);
-			return this.makeCORS(Response.ok());
+			return Response.ok().build();
 
 		} catch (RTRepositoryException e) {
-			return this.makeCORS(Response.serverError().entity(e.getMessage()));
+			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
 
@@ -152,9 +152,9 @@ public class Telescopes  extends CORSResource {
 		if (from == null && to == null) {
 			try {
 				RTAvailability availability = telescopes.getRTAvailability(name);
-				return this.makeCORS(Response.ok(availability));
+				return Response.ok(availability));
 			} catch (RTRepositoryException e) {
-				return this.makeCORS(Response.serverError().entity(e.getMessage()));
+				return Response.serverError().entity(e.getMessage()));
 			}
 		}
 		
@@ -164,18 +164,18 @@ public class Telescopes  extends CORSResource {
 			availability.setStartingTime(format.parse(from));
 			availability.setEndingTime(format.parse(to));
 		} catch (ParseException e1) {
-			return this.makeCORS(Response.status(Status.BAD_REQUEST).entity(e1.getMessage())
+			return Response.status(Status.BAD_REQUEST).entity(e1.getMessage())
 					);
 		}
 
 		try {
 			telescopes.setRTAvailability(name, availability);
-			return this.makeCORS(Response.ok());
+			return Response.ok());
 
 		} catch (RTRepositoryException e) {
-			return this.makeCORS(Response.serverError().entity(e.getMessage()));
+			return Response.serverError().entity(e.getMessage()));
 		}*/
 		
-		return this.makeCORS(Response.ok());
+		return Response.ok().build();
 	}
 }

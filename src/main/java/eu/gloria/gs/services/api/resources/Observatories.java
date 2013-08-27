@@ -20,8 +20,6 @@ import javax.ws.rs.core.Response;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.repository.rt.RTRepositoryException;
 import eu.gloria.gs.services.repository.rt.RTRepositoryInterface;
-import eu.gloria.gs.services.repository.rt.data.DeviceInformation;
-import eu.gloria.gs.services.repository.rt.data.DeviceType;
 import eu.gloria.gs.services.repository.rt.data.ObservatoryInformation;
 
 /**
@@ -29,7 +27,7 @@ import eu.gloria.gs.services.repository.rt.data.ObservatoryInformation;
  * 
  */
 @Path("/observatories")
-public class Observatories extends CORSResource {
+public class Observatories {
 
 	@Context
 	HttpServletRequest request;
@@ -37,7 +35,7 @@ public class Observatories extends CORSResource {
 	private static RTRepositoryInterface telescopes;
 
 	static {
-		GSClientProvider.setHost("saturno.datsi.fi.upm.es");
+		GSClientProvider.setHost("localhost");
 		GSClientProvider.setPort("8443");
 		telescopes = GSClientProvider.getRTRepositoryClient();
 	}
@@ -68,13 +66,13 @@ public class Observatories extends CORSResource {
 					observatories.add(obsInfo);
 				}
 
-				return this.makeCORS(Response.ok(observatories));
+				return Response.ok(observatories).build();
 			} else {
-				return this.makeCORS(Response.ok(names));
+				return Response.ok(names).build();
 			}
 
 		} catch (RTRepositoryException e) {
-			return this.makeCORS(Response.serverError().entity(e.getMessage()));
+			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
 
@@ -95,10 +93,10 @@ public class Observatories extends CORSResource {
 		try {
 			ObservatoryInformation obsInfo = telescopes
 					.getObservatoryInformation(name);
-			return this.makeCORS(Response.ok(obsInfo));
+			return Response.ok(obsInfo).build();
 
 		} catch (RTRepositoryException e) {
-			return this.makeCORS(Response.serverError().entity(e.getMessage()));
+			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
 
@@ -118,10 +116,10 @@ public class Observatories extends CORSResource {
 
 		try {
 			telescopes.registerObservatory(name, city, country);
-			return this.makeCORS(Response.ok());
+			return Response.ok().build();
 
 		} catch (RTRepositoryException e) {
-			return this.makeCORS(Response.serverError().entity(e.getMessage()));
+			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
 
@@ -141,10 +139,10 @@ public class Observatories extends CORSResource {
 
 		try {
 			List<String> rtNames = telescopes.getAllRTInObservatory(name);
-			return this.makeCORS(Response.ok(rtNames));
+			return Response.ok(rtNames).build();
 
 		} catch (RTRepositoryException e) {
-			return this.makeCORS(Response.serverError().entity(e.getMessage()));
+			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
 
@@ -165,10 +163,10 @@ public class Observatories extends CORSResource {
 
 		try {
 			telescopes.setRTObservatory(rt, name);
-			return this.makeCORS(Response.ok());
+			return Response.ok().build();
 
 		} catch (RTRepositoryException e) {
-			return this.makeCORS(Response.serverError().entity(e.getMessage()));
+			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
 }

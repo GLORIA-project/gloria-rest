@@ -35,7 +35,7 @@ import eu.gloria.gs.services.repository.image.data.ImageInformation;
 
 @Singleton
 @Path("/images")
-public class Images extends CORSResource {
+public class Images {
 
 	@Context
 	HttpServletRequest request;
@@ -43,7 +43,7 @@ public class Images extends CORSResource {
 	private static ImageRepositoryInterface images;
 
 	static {
-		GSClientProvider.setHost("saturno.datsi.fi.upm.es");
+		GSClientProvider.setHost("localhost");
 		GSClientProvider.setPort("8443");
 
 		images = GSClientProvider.getImageRepositoryClient();
@@ -70,14 +70,14 @@ public class Images extends CORSResource {
 			List<Integer> ids = images.getAllImageIdentifiersByDate(
 					calendar.getTime(), new Date());
 
-			return this.makeCORS(Response.ok(ids));
+			return Response.ok(ids).build();
 
 		} catch (ImageRepositoryException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		return this.makeCORS(Response.ok(new ArrayList<Integer>()));
+		return Response.ok(new ArrayList<Integer>()).build();
 	}
 
 	@GET
@@ -123,7 +123,7 @@ public class Images extends CORSResource {
 			}
 
 			if (!complete) {
-				return this.makeCORS(Response.ok(ids));
+				return Response.ok(ids).build();
 			} else {
 				ArrayList<ImageInformation> imageInfos = new ArrayList<>();
 
@@ -133,7 +133,7 @@ public class Images extends CORSResource {
 					imageInfos.add(imageInfo);
 				}
 
-				return this.makeCORS(Response.ok(imageInfos));
+				return Response.ok(imageInfos).build();
 			}
 
 		} catch (ImageRepositoryException e) {
@@ -141,7 +141,7 @@ public class Images extends CORSResource {
 			e.printStackTrace();
 		}
 
-		return this.makeCORS(Response.ok(new ArrayList<Integer>()));
+		return Response.ok(new ArrayList<Integer>()).build();
 	}
 
 	@GET
@@ -161,14 +161,14 @@ public class Images extends CORSResource {
 			ImageInformation imageInfo = images.getImageInformation(Integer
 					.valueOf(id));
 
-			return this.makeCORS(Response.ok(imageInfo));
+			return Response.ok(imageInfo).build();
 
 		} catch (ImageRepositoryException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		return this.makeCORS(Response.status(Status.BAD_REQUEST));
+		return Response.status(Status.BAD_REQUEST).build();
 	}
 
 }
