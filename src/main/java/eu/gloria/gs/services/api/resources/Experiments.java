@@ -48,7 +48,7 @@ public class Experiments {
 	private static OnlineExperimentInterface experiments;
 
 	static {
-		GSClientProvider.setHost("localhost");
+		GSClientProvider.setHost("saturno.datsi.fi.upm.es");
 		GSClientProvider.setPort("8443");
 		experiments = GSClientProvider.getOnlineExperimentClient();
 	}
@@ -175,12 +175,11 @@ public class Experiments {
 		}
 	}
 
-	@GET
-	@Path("/online/reserve/{experiment}")
-	public Response reserveExperiment(
-			@PathParam("experiment") String experiment,
-			@QueryParam("rts") List<String> rts,
-			@QueryParam("from") String from, @QueryParam("to") String to) {
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/online/reserve")
+	public Response reserveExperiment(ReserveOnlineExperimentRequest data) {
 
 		if (request.getAttribute("user") != null) {
 
@@ -190,20 +189,7 @@ public class Experiments {
 		}
 
 		try {
-
-			TimeSlot ts = new TimeSlot();
-
-			DateFormat format = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-
-			try {
-				ts.setBegin(format.parse(from));
-				ts.setEnd(format.parse(to));
-			} catch (ParseException e) {
-				return Response.status(Status.BAD_REQUEST)
-						.entity(e.getMessage()).build();
-			}
-
-			experiments.reserveExperiment(experiment, rts, ts);
+			experiments.reserveExperiment(data.getExperiment(), data.getTelescopes(), data.getTimeSlot());
 			return Response.ok().build();
 
 		} catch (OnlineExperimentException e) {

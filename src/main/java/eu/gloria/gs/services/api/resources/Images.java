@@ -43,7 +43,7 @@ public class Images {
 	private static ImageRepositoryInterface images;
 
 	static {
-		GSClientProvider.setHost("localhost");
+		GSClientProvider.setHost("saturno.datsi.fi.upm.es");
 		GSClientProvider.setPort("8443");
 
 		images = GSClientProvider.getImageRepositoryClient();

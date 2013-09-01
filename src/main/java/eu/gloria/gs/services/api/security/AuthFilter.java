@@ -72,7 +72,7 @@ public class AuthFilter implements ContainerRequestFilter {
 		String actualPassword = sha1(lap[1]);
 
 		try {
-			GSClientProvider.setCredentials("user", "password");
+			GSClientProvider.setCredentials("gloria-admin", "gl0r1@-@dm1n");
 						
 			if (!userRepository.authenticateUser(lap[0], actualPassword)) {
 				if (!userRepository.authenticateUser(lap[0], lap[1])) {

@@ -28,6 +28,4 @@ public class ListAvailableTimeSlotsRequest {
 	public void setTelescopes(List<String> telescopes) {
 		this.telescopes = telescopes;
 	}
-	
-	
 }
