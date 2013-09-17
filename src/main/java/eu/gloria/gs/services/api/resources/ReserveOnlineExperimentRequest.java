@@ -5,21 +5,32 @@
  */
 package eu.gloria.gs.services.api.resources;
 
-import eu.gloria.gs.services.experiment.base.data.TimeSlot;
+import java.sql.Date;
 
 /**
  * @author Fernando Serena (fserena@ciclope.info)
- *
+ * 
  */
-public class ReserveOnlineExperimentRequest extends ListAvailableTimeSlotsRequest {
+public class ReserveOnlineExperimentRequest extends
+		ListAvailableTimeSlotsRequest {
 
-	private TimeSlot timeSlot;
+	private Date begin;
+	private Date end;
 
-	public TimeSlot getTimeSlot() {
-		return timeSlot;
+	public Date getBegin() {
+		return begin;
 	}
 
-	public void setTimeSlot(TimeSlot timeSlot) {
-		this.timeSlot = timeSlot;
+	public void setBegin(Date begin) {
+		this.begin = begin;
 	}
+
+	public Date getEnd() {
+		return end;
+	}
+
+	public void setEnd(Date end) {
+		this.end = end;
+	}
+
 }

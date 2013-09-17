@@ -43,7 +43,7 @@ public class Images {
 	private static ImageRepositoryInterface images;
 
 	static {
-		GSClientProvider.setHost("saturno.datsi.fi.upm.es");
+		GSClientProvider.setHost("localhost");
 		GSClientProvider.setPort("8443");
 
 		images = GSClientProvider.getImageRepositoryClient();
@@ -73,11 +73,40 @@ public class Images {
 			return Response.ok(ids).build();
 
 		} catch (ImageRepositoryException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()).build();
 		}
+	}
 
-		return Response.ok(new ArrayList<Integer>()).build();
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/list/context/{rid}")
+	public Response listImagesByReservation(@PathParam("rid") int rid) {
+
+		GSClientProvider.setCredentials("gloria-admin", "gl0r1@-@dm1n");
+		
+		/*if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}*/
+
+		try {
+
+			List<ImageInformation> imgList = images
+					.getAllReservationImages(rid);
+
+			if (imgList == null) {
+				imgList = new ArrayList<ImageInformation>();
+			}
+			
+			return Response.ok(imgList).build();
+
+		} catch (ImageRepositoryException e) {
+			return Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()).build();
+		}
 	}
 
 	@GET
@@ -115,7 +144,7 @@ public class Images {
 					toDate);
 
 			if (ids == null) {
-				ids = new ArrayList<>();
+				ids = new ArrayList<Integer>();
 			}
 
 			if (maxResults != null) {
@@ -125,7 +154,7 @@ public class Images {
 			if (!complete) {
 				return Response.ok(ids).build();
 			} else {
-				ArrayList<ImageInformation> imageInfos = new ArrayList<>();
+				ArrayList<ImageInformation> imageInfos = new ArrayList<ImageInformation>();
 
 				for (Integer id : ids) {
 					ImageInformation imageInfo = images
@@ -137,11 +166,9 @@ public class Images {
 			}
 
 		} catch (ImageRepositoryException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()).build();
 		}
-
-		return Response.ok(new ArrayList<Integer>()).build();
 	}
 
 	@GET

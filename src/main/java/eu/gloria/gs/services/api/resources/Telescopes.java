@@ -5,10 +5,16 @@
  */
 package eu.gloria.gs.services.api.resources;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -39,14 +45,43 @@ public class Telescopes {
 	private static RTRepositoryInterface telescopes;
 
 	static {
-		GSClientProvider.setHost("saturno.datsi.fi.upm.es");
+		GSClientProvider.setHost("localhost");
 		GSClientProvider.setPort("8443");
 		telescopes = GSClientProvider.getRTRepositoryClient();
 	}
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/{name}/devices/list")
+	@Path("/list")
+	public Response getAllTelescopes() {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			List<String> completeNames = new ArrayList<>();
+
+			List<String> observatories = telescopes.getAllObservatoryNames();
+			for (String observatory : observatories) {
+				List<String> names = telescopes
+						.getAllRTInObservatory(observatory);
+				completeNames.addAll(names);
+			}
+
+			return Response.ok(completeNames).build();
+
+		} catch (RTRepositoryException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{name}/devices")
 	public Response getDevices(@PathParam("name") String name,
 			@QueryParam("detailed") boolean detailed,
 			@QueryParam("type") String type) {
@@ -69,7 +104,7 @@ public class Telescopes {
 			}
 
 			if (detailed) {
-				List<DeviceInformation> devices = new ArrayList<>();
+				List<DeviceInformation> devices = new ArrayList<DeviceInformation>();
 
 				for (String device : names) {
 					DeviceInformation devInfo = telescopes
@@ -86,14 +121,37 @@ public class Telescopes {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
-
+	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/{name}/devices/{device}")
-	public Response getDeviceInformation(@PathParam("name") String name,
-			@PathParam("device") String device) {
+	@Path("/{name}")
+	public Response getRTInformation(@PathParam("name") String name) {
 
-		device = device.replace("-", " ");
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			Map<String, Object> rtInfo = new LinkedHashMap<>();
+			
+			rtInfo.put("description" , telescopes.getRTDescription(name));
+			rtInfo.put("owner" , telescopes.getRTOwner(name));
+			rtInfo.put("coordinates" , telescopes.getRTCoordinates(name));
+			
+			return Response.ok(rtInfo).build();
+
+		} catch (RTRepositoryException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		}
+	}
+
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{name}/devices")
+	public Response getDeviceInformation(@PathParam("name") String name, Object devName) {
 
 		if (request.getAttribute("user") != null) {
 
@@ -104,7 +162,7 @@ public class Telescopes {
 
 		try {
 			DeviceInformation devInfo = telescopes.getRTDeviceInformation(name,
-					device);
+					(String)devName);
 			return Response.ok(devInfo).build();
 
 		} catch (RTRepositoryException e) {
@@ -112,13 +170,11 @@ public class Telescopes {
 		}
 	}
 
-	@GET
+	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/register")
 	public Response registerTelescope(@QueryParam("name") String name,
-			@QueryParam("owner") String owner, @QueryParam("url") String url,
-			@QueryParam("user") String user,
-			@QueryParam("password") String password) {
+			RegisterTelescopeRequest data) {
 
 		if (request.getAttribute("user") != null) {
 
@@ -128,7 +184,8 @@ public class Telescopes {
 		}
 
 		try {
-			telescopes.registerRT(name, owner, url, user, password);
+			telescopes.registerRT(name, data.getOwner(), data.getUrl(),
+					data.getUser(), data.getPassword());
 			return Response.ok().build();
 
 		} catch (RTRepositoryException e) {
@@ -137,45 +194,54 @@ public class Telescopes {
 	}
 
 	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{name}/availability")
-	public Response registerTelescope(@PathParam("name") String name,
-			@QueryParam("from") String from, @QueryParam("to") String to, RTAvailability availability) {
+	public Response setRTAvailability(@PathParam("name") String name,
+			RTAvailability availability) {
 
-		/*if (request.getAttribute("user") != null) {
+		if (request.getAttribute("user") != null) {
 
 			GSClientProvider.setCredentials(
 					(String) request.getAttribute("user"),
 					(String) request.getAttribute("password"));
 		}
 
-		if (from == null && to == null) {
-			try {
-				RTAvailability availability = telescopes.getRTAvailability(name);
-				return Response.ok(availability));
-			} catch (RTRepositoryException e) {
-				return Response.serverError().entity(e.getMessage()));
-			}
-		}
-		
-		DateFormat format = new SimpleDateFormat("HH-mm-ss");
-		RTAvailability availability = new RTAvailability();
-		try {
-			availability.setStartingTime(format.parse(from));
-			availability.setEndingTime(format.parse(to));
-		} catch (ParseException e1) {
-			return Response.status(Status.BAD_REQUEST).entity(e1.getMessage())
-					);
-		}
-
 		try {
 			telescopes.setRTAvailability(name, availability);
-			return Response.ok());
-
+			return Response.ok().build();
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()));
-		}*/
-		
-		return Response.ok().build();
+			return Response.serverError().entity(e.getMessage()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{name}/availability")
+	public Response getRTAvailability(@PathParam("name") String name) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			RTAvailability availability = telescopes.getRTAvailability(name);
+
+			DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+			dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+			Map<String, String> availabilityFormatted = new LinkedHashMap<>();
+
+			availabilityFormatted.put("startingTime",
+					dateFormat.format(availability.getStartingTime()));
+			availabilityFormatted.put("endingTime",
+					dateFormat.format(availability.getEndingTime()));
+
+			return Response.ok(availabilityFormatted).build();
+		} catch (RTRepositoryException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		}
 	}
 }

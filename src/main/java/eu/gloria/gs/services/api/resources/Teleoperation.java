@@ -55,7 +55,7 @@ public class Teleoperation {
 	private static GenericTeleoperationInterface generics;
 
 	static {
-		GSClientProvider.setHost("saturno.datsi.fi.upm.es");
+		GSClientProvider.setHost("localhost");
 		GSClientProvider.setPort("8443");
 		mounts = GSClientProvider.getMountTeleoperationClient();
 		domes = GSClientProvider.getDomeTeleoperationClient();

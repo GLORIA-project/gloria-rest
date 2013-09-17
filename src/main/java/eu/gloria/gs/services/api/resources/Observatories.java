@@ -26,6 +26,7 @@ import eu.gloria.gs.services.repository.rt.data.ObservatoryInformation;
  * @author Fernando Serena (fserena@ciclope.info)
  * 
  */
+
 @Path("/observatories")
 public class Observatories {
 
@@ -35,7 +36,7 @@ public class Observatories {
 	private static RTRepositoryInterface telescopes;
 
 	static {
-		GSClientProvider.setHost("saturno.datsi.fi.upm.es");
+		GSClientProvider.setHost("localhost");
 		GSClientProvider.setPort("8443");
 		telescopes = GSClientProvider.getRTRepositoryClient();
 	}
@@ -55,7 +56,7 @@ public class Observatories {
 		try {
 
 			List<String> names = null;
-			List<ObservatoryInformation> observatories = new ArrayList<>();
+			List<ObservatoryInformation> observatories = new ArrayList<ObservatoryInformation>();
 			names = telescopes.getAllObservatoryNames();
 
 			if (detailed) {
