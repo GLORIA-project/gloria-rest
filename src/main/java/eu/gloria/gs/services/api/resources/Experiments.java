@@ -27,12 +27,14 @@ import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.experiment.ExperimentException;
 import eu.gloria.gs.services.experiment.ExperimentInterface;
 import eu.gloria.gs.services.experiment.base.data.ExperimentInformation;
+import eu.gloria.gs.services.experiment.base.data.FeatureInformation;
 import eu.gloria.gs.services.experiment.base.data.NoSuchExperimentException;
 import eu.gloria.gs.services.experiment.base.data.OperationInformation;
 import eu.gloria.gs.services.experiment.base.data.ParameterInformation;
 import eu.gloria.gs.services.experiment.base.data.ReservationInformation;
 import eu.gloria.gs.services.experiment.base.data.TimeSlot;
 import eu.gloria.gs.services.experiment.base.models.DuplicateExperimentException;
+import eu.gloria.gs.services.experiment.base.models.ExperimentFeature;
 import eu.gloria.gs.services.experiment.base.operations.ExperimentOperation;
 import eu.gloria.gs.services.experiment.base.operations.ExperimentOperationException;
 import eu.gloria.gs.services.experiment.base.operations.NoSuchOperationException;
@@ -683,6 +685,33 @@ public class Experiments {
 					.entity(e.getMessage()).build();
 		}
 	}
+	
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{experiment}/features/add")
+	public Response addExperimentFeature(
+			@PathParam("experiment") String experiment,
+			FeatureInformation featureInfo) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			experiments.addExperimentFeature(experiment, featureInfo);
+			return Response.ok().build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (NoSuchExperimentException e) {
+			return Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()).build();
+		}
+	}
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -728,6 +757,27 @@ public class Experiments {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/engine/features")
+	public Response getAllFeatures() {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			Set<String> features = experiments.getAllExperimentFeatures();
+			return Response.ok(features).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		}
+	}
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/engine/parameters/{name}")
 	public Response getExperimentParameter(@PathParam("name") String name) {
 
@@ -762,6 +812,27 @@ public class Experiments {
 		try {
 			ExperimentOperation operation = experiments.getExperimentOperation(name);
 			return Response.ok(operation).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		}
+	}
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/engine/features/{name}")
+	public Response getExperimentFeature(@PathParam("name") String name) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			ExperimentFeature feature = experiments.getExperimentFeature(name);
+			return Response.ok(feature).build();
 
 		} catch (ExperimentException e) {
 			return Response.serverError().entity(e.getMessage()).build();
