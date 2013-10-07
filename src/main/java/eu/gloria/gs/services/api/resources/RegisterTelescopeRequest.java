@@ -9,7 +9,7 @@ package eu.gloria.gs.services.api.resources;
  * @author Fernando Serena (fserena@ciclope.info)
  * 
  */
-public class RegisterTelescopeRequest extends ListAvailableTimeSlotsRequest {
+public class RegisterTelescopeRequest {
 
 	private String url;
 	private String owner;

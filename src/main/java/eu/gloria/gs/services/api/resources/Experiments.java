@@ -27,7 +27,11 @@ import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.experiment.ExperimentException;
 import eu.gloria.gs.services.experiment.ExperimentInterface;
 import eu.gloria.gs.services.experiment.base.data.ExperimentInformation;
+<<<<<<< HEAD
 import eu.gloria.gs.services.experiment.base.data.FeatureInformation;
+=======
+import eu.gloria.gs.services.experiment.base.data.ExperimentRuntimeInformation;
+>>>>>>> 7478183023f8d428c118d18a47fdab9c249752c9
 import eu.gloria.gs.services.experiment.base.data.NoSuchExperimentException;
 import eu.gloria.gs.services.experiment.base.data.OperationInformation;
 import eu.gloria.gs.services.experiment.base.data.ParameterInformation;
@@ -63,7 +67,6 @@ public class Experiments {
 	private static ExperimentInterface experiments;
 
 	static {
-		GSClientProvider.setHost("localhost");
 		GSClientProvider.setPort("8443");
 		experiments = GSClientProvider.getOnlineExperimentClient();
 	}
@@ -314,6 +317,68 @@ public class Experiments {
 			return Response.status(Status.NOT_ACCEPTABLE)
 					.entity(e.getMessage()).build();
 		} catch (NoSuchExperimentException e) {
+			return Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/context/{rid}/remaining")
+	public Response getContextRemainingTime(@PathParam("rid") int rid) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+
+			ExperimentRuntimeInformation runtimeInfo = experiments
+					.getExperimentRuntimeInformation(rid);
+			long remaining = runtimeInfo.getRemainingTime();
+
+			return Response.ok(remaining).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (NoSuchReservationException e) {
+			return Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()).build();
+		} catch (ExperimentNotInstantiatedException e) {
+			return Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/context/{rid}/elapsed")
+	public Response getContextElapsedTime(@PathParam("rid") int rid) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+
+			ExperimentRuntimeInformation runtimeInfo = experiments
+					.getExperimentRuntimeInformation(rid);
+			long elapsed = runtimeInfo.getElapsedTime();
+
+			return Response.ok(elapsed).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (NoSuchReservationException e) {
+			return Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()).build();
+		} catch (ExperimentNotInstantiatedException e) {
 			return Response.status(Status.NOT_ACCEPTABLE)
 					.entity(e.getMessage()).build();
 		}
@@ -733,7 +798,7 @@ public class Experiments {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/engine/operations")
@@ -754,7 +819,7 @@ public class Experiments {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/engine/features")
@@ -789,14 +854,15 @@ public class Experiments {
 		}
 
 		try {
-			ExperimentParameter parameter = experiments.getExperimentParameter(name);
+			ExperimentParameter parameter = experiments
+					.getExperimentParameter(name);
 			return Response.ok(parameter).build();
 
 		} catch (ExperimentException e) {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/engine/operations/{name}")
@@ -810,7 +876,8 @@ public class Experiments {
 		}
 
 		try {
-			ExperimentOperation operation = experiments.getExperimentOperation(name);
+			ExperimentOperation operation = experiments
+					.getExperimentOperation(name);
 			return Response.ok(operation).build();
 
 		} catch (ExperimentException e) {
