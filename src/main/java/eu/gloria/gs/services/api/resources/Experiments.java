@@ -7,6 +7,7 @@ package eu.gloria.gs.services.api.resources;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -27,11 +28,8 @@ import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.experiment.ExperimentException;
 import eu.gloria.gs.services.experiment.ExperimentInterface;
 import eu.gloria.gs.services.experiment.base.data.ExperimentInformation;
-<<<<<<< HEAD
 import eu.gloria.gs.services.experiment.base.data.FeatureInformation;
-=======
 import eu.gloria.gs.services.experiment.base.data.ExperimentRuntimeInformation;
->>>>>>> 7478183023f8d428c118d18a47fdab9c249752c9
 import eu.gloria.gs.services.experiment.base.data.NoSuchExperimentException;
 import eu.gloria.gs.services.experiment.base.data.OperationInformation;
 import eu.gloria.gs.services.experiment.base.data.ParameterInformation;
@@ -379,6 +377,65 @@ public class Experiments {
 			return Response.status(Status.NOT_ACCEPTABLE)
 					.entity(e.getMessage()).build();
 		} catch (ExperimentNotInstantiatedException e) {
+			return Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/context/{rid}")
+	public Response getParameterContext(@PathParam("rid") int rid,
+			@PathParam("parameter") String parameter) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+
+			ReservationInformation resInfo = experiments
+					.getReservationInformation(rid);
+
+			ExperimentInformation expInfo = experiments
+					.getExperimentInformation(resInfo.getExperiment());
+
+			List<ParameterInformation> parameterInfos = expInfo.getParameters();
+			LinkedHashMap<String, Object> context = new LinkedHashMap<>();
+			
+			for (ParameterInformation paramInfo : parameterInfos) {
+
+				ObjectResponse response = experiments
+						.getExperimentParameterValue(rid, paramInfo.getName());
+
+				Object value = null;
+				Class<?> valueType = Object.class;
+				Class<?> elementType = null;
+
+				if (paramInfo.getName().equals(parameter)) {
+					ParameterType type = paramInfo.getParameter().getType();
+					valueType = type.getValueType();
+					elementType = type.getElementType();
+				}
+
+				context.put(paramInfo.getName(), JSONConverter.fromJSON((String) response.content,
+						valueType, elementType));
+			}
+
+			return Response.ok(context).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (NoSuchReservationException e) {
+			return Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()).build();
+		} catch (ExperimentNotInstantiatedException e) {
+			return Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()).build();
+		} catch (NoSuchExperimentException e) {
 			return Response.status(Status.NOT_ACCEPTABLE)
 					.entity(e.getMessage()).build();
 		}
@@ -750,7 +807,7 @@ public class Experiments {
 					.entity(e.getMessage()).build();
 		}
 	}
-	
+
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -793,7 +850,6 @@ public class Experiments {
 		try {
 			Set<String> parameters = experiments.getAllExperimentParameters();
 			return Response.ok(parameters).build();
-
 		} catch (ExperimentException e) {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
@@ -814,7 +870,6 @@ public class Experiments {
 		try {
 			Set<String> operations = experiments.getAllExperimentOperations();
 			return Response.ok(operations).build();
-
 		} catch (ExperimentException e) {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
@@ -835,12 +890,11 @@ public class Experiments {
 		try {
 			Set<String> features = experiments.getAllExperimentFeatures();
 			return Response.ok(features).build();
-
 		} catch (ExperimentException e) {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/engine/parameters/{name}")
@@ -857,7 +911,6 @@ public class Experiments {
 			ExperimentParameter parameter = experiments
 					.getExperimentParameter(name);
 			return Response.ok(parameter).build();
-
 		} catch (ExperimentException e) {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
@@ -884,7 +937,7 @@ public class Experiments {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/engine/features/{name}")
