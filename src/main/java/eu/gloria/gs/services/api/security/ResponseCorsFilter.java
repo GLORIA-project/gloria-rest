@@ -1,7 +1,9 @@
 package eu.gloria.gs.services.api.security;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerResponse;
@@ -13,6 +15,8 @@ public class ResponseCorsFilter implements ContainerResponseFilter {
 	public ContainerResponse filter(ContainerRequest req,
 			ContainerResponse contResp) {
 
+		String method = req.getMethod();
+		
 		ResponseBuilder resp = Response.fromResponse(contResp.getResponse());
 		
 		resp.header("Access-Control-Allow-Origin", "*");
@@ -20,7 +24,11 @@ public class ResponseCorsFilter implements ContainerResponseFilter {
 		resp.header("Access-Control-Allow-Credentials", "true");
 		resp.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
 		resp.header("Access-Control-Max-Age", "1209600");
-		
+
+		/*if (method.equals("OPTIONS")) {
+			throw new WebApplicationException(Status.OK);
+		}*/
+
 		//String reqHead = req.getHeaderValue("Access-Control-Request-Headers");
 
 		/*if (null != reqHead && !reqHead.equals("")) {

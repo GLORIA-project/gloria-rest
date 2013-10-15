@@ -22,10 +22,16 @@ public class AuthFilter implements ContainerRequestFilter {
 
 	private static UserRepositoryInterface userRepository = null;
 
+	private static String adminUsername;
+	private static String adminPassword;
+	
 	static {
-		GSClientProvider.setHost("localhost");
+		GSClientProvider.setHost("venus.datsi.fi.upm.es");
 		GSClientProvider.setPort("8443");
 
+		adminPassword = "password";
+		adminUsername = "user";
+		
 		userRepository = GSClientProvider.getUserRepositoryClient();
 	}
 
@@ -44,7 +50,7 @@ public class AuthFilter implements ContainerRequestFilter {
 		// GET, POST, PUT, DELETE, ...
 		String method = containerRequest.getMethod();
 		// myresource/get/56bCA for example
-		String path = containerRequest.getPath(true);
+		//String path = containerRequest.getPath(true);
 
 		if (method.equals("OPTIONS")) {
 			throw new WebApplicationException(Status.OK);
@@ -66,6 +72,8 @@ public class AuthFilter implements ContainerRequestFilter {
 		 * WebApplicationException(Status.UNAUTHORIZED); }
 		 */
 
+		GSClientProvider.setCredentials("dummy", "neh");
+		
 		if (auth != null) {
 			// lap : loginAndPassword
 			String[] lap = BasicAuth.decode(auth);
@@ -78,7 +86,7 @@ public class AuthFilter implements ContainerRequestFilter {
 			String actualPassword = sha1(lap[1]);
 
 			try {
-				GSClientProvider.setCredentials("gloria-admin", "gl0r1@-@dm1n");
+				GSClientProvider.setCredentials(adminUsername, adminPassword);
 
 				if (!userRepository.authenticateUser(lap[0], actualPassword)) {
 					if (!userRepository.authenticateUser(lap[0], lap[1])) {
@@ -87,6 +95,7 @@ public class AuthFilter implements ContainerRequestFilter {
 						actualPassword = lap[1];
 					}
 				}
+								
 			} catch (UserRepositoryException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

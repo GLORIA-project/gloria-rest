@@ -41,10 +41,16 @@ public class Images {
 	HttpServletRequest request;
 
 	private static ImageRepositoryInterface images;
+	private static String adminUsername;
+	private static String adminPassword;
+	
 
 	static {
 		GSClientProvider.setHost("venus.datsi.fi.upm.es");
 		GSClientProvider.setPort("8443");
+		
+		adminPassword = "password";
+		adminUsername = "user";
 
 		images = GSClientProvider.getImageRepositoryClient();
 	}
@@ -83,14 +89,7 @@ public class Images {
 	@Path("/list/context/{rid}")
 	public Response listImagesByReservation(@PathParam("rid") int rid) {
 
-		GSClientProvider.setCredentials("gloria-admin", "gl0r1@-@dm1n");
-		
-		/*if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}*/
+		GSClientProvider.setCredentials(adminUsername, adminPassword);
 
 		try {
 
@@ -114,14 +113,7 @@ public class Images {
 	@Path("/list/object/{object}")
 	public Response listImagesByObject(@PathParam("object") String object) {
 
-		GSClientProvider.setCredentials("gloria-admin", "gl0r1@-@dm1n");
-		
-		/*if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}*/
+		GSClientProvider.setCredentials(adminUsername, adminPassword);
 
 		try {
 
