@@ -43,7 +43,7 @@ public class Images {
 	private static ImageRepositoryInterface images;
 
 	static {
-		GSClientProvider.setHost("localhost");
+		GSClientProvider.setHost("venus.datsi.fi.upm.es");
 		GSClientProvider.setPort("8443");
 
 		images = GSClientProvider.getImageRepositoryClient();
@@ -108,6 +108,36 @@ public class Images {
 					.entity(e.getMessage()).build();
 		}
 	}
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/list/object/{object}")
+	public Response listImagesByObject(@PathParam("object") String object) {
+
+		GSClientProvider.setCredentials("gloria-admin", "gl0r1@-@dm1n");
+		
+		/*if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}*/
+
+		try {
+
+			List<Integer> imgList = images.getAllObjectImages(object);
+
+			if (imgList == null) {
+				imgList = new ArrayList<Integer>();
+			}
+			
+			return Response.ok(imgList).build();
+
+		} catch (ImageRepositoryException e) {
+			return Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()).build();
+		}
+	}
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -127,7 +157,7 @@ public class Images {
 		try {
 			Calendar calendar = Calendar.getInstance();
 			calendar.set(Calendar.DAY_OF_MONTH, Integer.valueOf(day));
-			calendar.set(Calendar.MONTH, Integer.valueOf(month));
+			calendar.set(Calendar.MONTH, Integer.valueOf(month) - 1);
 			calendar.set(Calendar.YEAR, Integer.valueOf(year));
 			calendar.set(Calendar.HOUR_OF_DAY, 0);
 			calendar.set(Calendar.MINUTE, 0);

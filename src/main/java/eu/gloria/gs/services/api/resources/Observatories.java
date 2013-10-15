@@ -36,8 +36,9 @@ public class Observatories {
 	private static RTRepositoryInterface telescopes;
 
 	static {
-		GSClientProvider.setHost("localhost");
+		GSClientProvider.setHost("venus.datsi.fi.upm.es");
 		GSClientProvider.setPort("8443");
+
 		telescopes = GSClientProvider.getRTRepositoryClient();
 	}
 

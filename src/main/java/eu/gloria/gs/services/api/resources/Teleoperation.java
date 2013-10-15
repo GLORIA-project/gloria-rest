@@ -35,6 +35,8 @@ import eu.gloria.gs.services.teleoperation.mount.MountTeleoperationException;
 import eu.gloria.gs.services.teleoperation.mount.MountTeleoperationInterface;
 import eu.gloria.gs.services.teleoperation.scam.SCamTeleoperationException;
 import eu.gloria.gs.services.teleoperation.scam.SCamTeleoperationInterface;
+import eu.gloria.gs.services.teleoperation.weather.WeatherTeleoperationException;
+import eu.gloria.gs.services.teleoperation.weather.WeatherTeleoperationInterface;
 
 /**
  * @author Fernando Serena (fserena@ciclope.info)
@@ -52,18 +54,96 @@ public class Teleoperation {
 	private static CCDTeleoperationInterface ccds;
 	private static FilterWheelTeleoperationInterface filters;
 	private static FocuserTeleoperationInterface focusers;
+	private static WeatherTeleoperationInterface weathers;
 	private static GenericTeleoperationInterface generics;
 
 	static {
-		GSClientProvider.setHost("localhost");
+		GSClientProvider.setHost("venus.datsi.fi.upm.es");
 		GSClientProvider.setPort("8443");
+
 		mounts = GSClientProvider.getMountTeleoperationClient();
 		domes = GSClientProvider.getDomeTeleoperationClient();
 		scams = GSClientProvider.getSCamTeleoperationClient();
 		filters = GSClientProvider.getFilterWheelTeleoperationClient();
+		weathers = GSClientProvider.getWeatherTeleoperationClient();
 		focusers = GSClientProvider.getFocuserTeleoperationClient();
 		ccds = GSClientProvider.getCCDTeleoperationClient();
 		generics = GSClientProvider.getGenericTeleoperationClient();
+	}
+	
+	@GET
+	@Path("/weather/pressure/{rt}/{barometer}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getPressure(@PathParam("rt") String rt,
+			@PathParam("barometer") String barometer) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			double pressure = weathers.getPressure(rt, barometer);
+
+			return Response.ok(pressure).build();
+		} catch (WeatherTeleoperationException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (DeviceOperationFailedException e) {
+			return Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()).build();
+		}
+	}
+	
+	@GET
+	@Path("/weather/wind/{rt}/{wind}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getWindSpeed(@PathParam("rt") String rt,
+			@PathParam("wind") String wind) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			double windSpeed = weathers.getWindSpeed(rt, wind);
+
+			return Response.ok(windSpeed).build();
+		} catch (WeatherTeleoperationException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (DeviceOperationFailedException e) {
+			return Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()).build();
+		}
+	}
+	
+	@GET
+	@Path("/weather/rh/{rt}/{rh}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getRelativeHumidity(@PathParam("rt") String rt,
+			@PathParam("rh") String rh) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			double humidity = weathers.getRelativeHumidity(rt, rh);
+
+			return Response.ok(humidity).build();
+		} catch (WeatherTeleoperationException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (DeviceOperationFailedException e) {
+			return Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(e.getMessage()).build();
+		}
 	}
 
 	@GET

@@ -45,8 +45,9 @@ public class Telescopes {
 	private static RTRepositoryInterface telescopes;
 
 	static {
-		GSClientProvider.setHost("localhost");
+		GSClientProvider.setHost("venus.datsi.fi.upm.es");
 		GSClientProvider.setPort("8443");
+
 		telescopes = GSClientProvider.getRTRepositoryClient();
 	}
 
@@ -73,6 +74,50 @@ public class Telescopes {
 			}
 
 			return Response.ok(completeNames).build();
+
+		} catch (RTRepositoryException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/interactive/list")
+	public Response getAllInteractiveTelescopes() {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			List<String> names = telescopes.getAllInteractiveRTs();
+
+			return Response.ok(names).build();
+
+		} catch (RTRepositoryException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/batch/list")
+	public Response getAllBatchTelescopes() {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			List<String> names = telescopes.getAllBatchRTs();
+
+			return Response.ok(names).build();
 
 		} catch (RTRepositoryException e) {
 			return Response.serverError().entity(e.getMessage()).build();
@@ -121,7 +166,7 @@ public class Telescopes {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{name}")
@@ -136,11 +181,11 @@ public class Telescopes {
 
 		try {
 			Map<String, Object> rtInfo = new LinkedHashMap<>();
-			
-			rtInfo.put("description" , telescopes.getRTDescription(name));
-			rtInfo.put("owner" , telescopes.getRTOwner(name));
-			rtInfo.put("coordinates" , telescopes.getRTCoordinates(name));
-			
+
+			rtInfo.put("description", telescopes.getRTDescription(name));
+			rtInfo.put("owner", telescopes.getRTOwner(name));
+			rtInfo.put("coordinates", telescopes.getRTCoordinates(name));
+
 			return Response.ok(rtInfo).build();
 
 		} catch (RTRepositoryException e) {
@@ -151,7 +196,8 @@ public class Telescopes {
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{name}/devices")
-	public Response getDeviceInformation(@PathParam("name") String name, Object devName) {
+	public Response getDeviceInformation(@PathParam("name") String name,
+			Object devName) {
 
 		if (request.getAttribute("user") != null) {
 
@@ -162,7 +208,7 @@ public class Telescopes {
 
 		try {
 			DeviceInformation devInfo = telescopes.getRTDeviceInformation(name,
-					(String)devName);
+					(String) devName);
 			return Response.ok(devInfo).build();
 
 		} catch (RTRepositoryException e) {
@@ -172,8 +218,32 @@ public class Telescopes {
 
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/register")
-	public Response registerTelescope(@QueryParam("name") String name,
+	@Path("/interactive/register")
+	public Response registerInteractiveTelescope(
+			@QueryParam("name") String name, RegisterTelescopeRequest data) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			telescopes.registerInteractiveRT(name, data.getOwner(),
+					data.getUrl(), data.getPort(), data.getUser(),
+					data.getPassword());
+			return Response.ok().build();
+
+		} catch (RTRepositoryException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		}
+	}
+
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/batch/register")
+	public Response registerBatchTelescope(@QueryParam("name") String name,
 			RegisterTelescopeRequest data) {
 
 		if (request.getAttribute("user") != null) {
@@ -184,8 +254,8 @@ public class Telescopes {
 		}
 
 		try {
-			telescopes.registerRT(name, data.getOwner(), data.getUrl(),
-					data.getUser(), data.getPassword());
+			telescopes.registerBatchRT(name, data.getOwner(), data.getUrl(),
+					data.getPort(), data.getUser(), data.getPassword());
 			return Response.ok().build();
 
 		} catch (RTRepositoryException e) {
