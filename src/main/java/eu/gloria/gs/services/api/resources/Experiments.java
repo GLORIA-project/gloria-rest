@@ -34,6 +34,7 @@ import eu.gloria.gs.services.experiment.base.data.NoSuchExperimentException;
 import eu.gloria.gs.services.experiment.base.data.OperationInformation;
 import eu.gloria.gs.services.experiment.base.data.ParameterInformation;
 import eu.gloria.gs.services.experiment.base.data.ReservationInformation;
+import eu.gloria.gs.services.experiment.base.data.ResultInformation;
 import eu.gloria.gs.services.experiment.base.data.TimeSlot;
 import eu.gloria.gs.services.experiment.base.models.DuplicateExperimentException;
 import eu.gloria.gs.services.experiment.base.models.ExperimentFeature;
@@ -65,7 +66,9 @@ public class Experiments {
 	private static ExperimentInterface experiments;
 
 	static {
+		GSClientProvider.setHost("venus.datsi.fi.upm.es");
 		GSClientProvider.setPort("8443");
+
 		experiments = GSClientProvider.getOnlineExperimentClient();
 	}
 
@@ -405,7 +408,7 @@ public class Experiments {
 
 			List<ParameterInformation> parameterInfos = expInfo.getParameters();
 			LinkedHashMap<String, Object> context = new LinkedHashMap<>();
-			
+
 			for (ParameterInformation paramInfo : parameterInfos) {
 
 				ObjectResponse response = experiments
@@ -421,8 +424,8 @@ public class Experiments {
 					elementType = type.getElementType();
 				}
 
-				context.put(paramInfo.getName(), JSONConverter.fromJSON((String) response.content,
-						valueType, elementType));
+				context.put(paramInfo.getName(), JSONConverter.fromJSON(
+						(String) response.content, valueType, elementType));
 			}
 
 			return Response.ok(context).build();
@@ -460,13 +463,13 @@ public class Experiments {
 			ReservationInformation resInfo = experiments
 					.getReservationInformation(rid);
 
-			ExperimentInformation expInfo = experiments
-					.getExperimentInformation(resInfo.getExperiment());
-
-			List<ParameterInformation> parameterInfos = expInfo.getParameters();
+			ParameterInformation paramInfo = experiments
+					.getParameterInformation(resInfo.getExperiment(), parameter);
 
 			String parameterTree = parameter;
 			if (tree != null) {
+				tree = tree.replace("%5B", "[");
+				tree = tree.replace("%5D", "]");
 				parameterTree = parameterTree + "." + tree;
 			}
 
@@ -477,16 +480,16 @@ public class Experiments {
 			Class<?> valueType = Object.class;
 			Class<?> elementType = null;
 
-			for (ParameterInformation paramInfo : parameterInfos) {
-				if (paramInfo.getName().equals(parameter)) {
-					ParameterType type = paramInfo.getParameter().getType();
-					valueType = type.getValueType();
-					elementType = type.getElementType();
-				}
-			}
+			ParameterType type = paramInfo.getParameter().getType();
+			valueType = type.getValueType();
+			elementType = type.getElementType();
 
 			value = JSONConverter.fromJSON((String) response.content,
 					valueType, elementType);
+
+			// if (valueType.equals(String.class)) {
+			value = JSONConverter.toJSON(value);
+			// }
 
 			return Response.ok(value).build();
 
@@ -544,12 +547,14 @@ public class Experiments {
 
 			String parameterTree = parameter;
 			if (tree != null) {
+				tree = tree.replace("%5B", "[");
+				tree = tree.replace("%5D", "]");
 				parameterTree = parameterTree + "." + tree;
 			}
 
 			experiments.setExperimentParameterValue(rid, parameterTree,
 					new ObjectResponse(castedValue));
-			return Response.ok().build();
+			return Response.ok("[]").build();
 
 		} catch (ExperimentException e) {
 			return Response.serverError().entity(e.getMessage()).build();
@@ -718,7 +723,7 @@ public class Experiments {
 
 			experiments.executeExperimentOperation(rid, operation);
 
-			return Response.ok().build();
+			return Response.ok("[]").build();
 
 		} catch (ExperimentException e) {
 			return Response.serverError().entity(e.getMessage()).build();
@@ -956,6 +961,106 @@ public class Experiments {
 
 		} catch (ExperimentException e) {
 			return Response.serverError().entity(e.getMessage()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{experiment}/results")
+	public Response getExperimentResults(
+			@PathParam("experiment") String experiment,
+			@QueryParam("valuesOnly") boolean valuesOnly) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+
+			List<ResultInformation> results = experiments
+					.getExperimentResults(experiment);
+
+			if (results == null) {
+				results = new ArrayList<>();
+			}
+			
+			if (valuesOnly) {
+
+				List<Object> values = new ArrayList<>();
+
+				for (ResultInformation result : results) {
+					values.add(JSONConverter.fromJSON(
+							(String) result.getValue(), Object.class, null));
+				}
+
+				return Response.ok(values).build();
+			}
+
+			for (ResultInformation result : results) {
+				result.setValue(JSONConverter.fromJSON(
+						(String) result.getValue(), Object.class, null));
+			}
+
+			return Response.ok(results).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/context/{rid}/results")
+	public Response getContextResults(@PathParam("rid") int rid,
+			@QueryParam("valuesOnly") boolean valuesOnly) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+
+			List<ResultInformation> results = experiments
+					.getContextResults(rid);
+
+			
+			if (results == null) {
+				results = new ArrayList<>();
+			}
+
+			if (valuesOnly) {
+
+				List<Object> values = new ArrayList<>();
+
+				for (ResultInformation result : results) {
+					values.add(JSONConverter.fromJSON(
+							(String) result.getValue(), Object.class, null));
+				}
+
+				return Response.ok(values).build();
+			}
+			
+			for (ResultInformation result : results) {
+				result.setValue(JSONConverter.fromJSON(
+						(String) result.getValue(), Object.class, null));
+			}
+
+			return Response.ok(results).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (ExperimentNotInstantiatedException e) {
+			return Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()).build();
+		} catch (NoSuchReservationException e) {
+			return Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()).build();
 		}
 	}
 }
