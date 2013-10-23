@@ -5,6 +5,7 @@
  */
 package eu.gloria.gs.services.api.resources;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -125,6 +126,10 @@ public class Scheduler {
 		try {
 
 			List<ScheduleInformation> schInfos = scheduler.getMyActivePlans();
+			
+			if (schInfos == null) {
+				schInfos = new ArrayList<>();
+			}
 
 			return Response.ok(schInfos).build();
 

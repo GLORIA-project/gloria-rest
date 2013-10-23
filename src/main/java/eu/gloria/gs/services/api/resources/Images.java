@@ -49,8 +49,8 @@ public class Images {
 		GSClientProvider.setHost("venus.datsi.fi.upm.es");
 		GSClientProvider.setPort("8443");
 		
-		adminPassword = "password";
-		adminUsername = "user";
+		adminPassword = "gl0r1@-@dm1n";
+		adminUsername = "gloria-admin";
 
 		images = GSClientProvider.getImageRepositoryClient();
 	}
