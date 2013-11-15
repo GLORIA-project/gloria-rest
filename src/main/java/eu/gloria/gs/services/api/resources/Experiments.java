@@ -24,6 +24,10 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import org.springframework.context.ApplicationContext;
+
+import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.experiment.ExperimentException;
 import eu.gloria.gs.services.experiment.ExperimentInterface;
@@ -66,8 +70,15 @@ public class Experiments {
 	private static ExperimentInterface experiments;
 
 	static {
-		GSClientProvider.setHost("venus.datsi.fi.upm.es");
-		GSClientProvider.setPort("8443");
+		
+		ApplicationContext context = ApplicationContextProvider
+				.getApplicationContext();
+
+		String hostName = (String) context.getBean("hostName");
+		String hostPort = (String) context.getBean("hostPort");
+
+		GSClientProvider.setHost(hostName);
+		GSClientProvider.setPort(hostPort);
 
 		experiments = GSClientProvider.getOnlineExperimentClient();
 	}

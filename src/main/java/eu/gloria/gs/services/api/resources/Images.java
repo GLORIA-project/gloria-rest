@@ -21,8 +21,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.springframework.context.ApplicationContext;
+
 import com.sun.jersey.spi.resource.Singleton;
 
+import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.repository.image.ImageRepositoryException;
 import eu.gloria.gs.services.repository.image.ImageRepositoryInterface;
@@ -46,11 +49,17 @@ public class Images {
 	
 
 	static {
-		GSClientProvider.setHost("venus.datsi.fi.upm.es");
-		GSClientProvider.setPort("8443");
+		ApplicationContext context = ApplicationContextProvider
+				.getApplicationContext();
+
+		String hostName = (String) context.getBean("hostName");
+		String hostPort = (String) context.getBean("hostPort");
+
+		GSClientProvider.setHost(hostName);
+		GSClientProvider.setPort(hostPort);
 		
-		adminPassword = "gl0r1@-@dm1n";
-		adminUsername = "gloria-admin";
+		adminPassword = (String) context.getBean("adminPassword");
+		adminUsername = (String) context.getBean("adminUsername");
 
 		images = GSClientProvider.getImageRepositoryClient();
 	}

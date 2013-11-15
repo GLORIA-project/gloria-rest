@@ -17,6 +17,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import org.springframework.context.ApplicationContext;
+
+import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.teleoperation.base.DeviceOperationFailedException;
 import eu.gloria.gs.services.teleoperation.ccd.CCDTeleoperationException;
@@ -58,8 +62,14 @@ public class Teleoperation {
 	private static GenericTeleoperationInterface generics;
 
 	static {
-		GSClientProvider.setHost("venus.datsi.fi.upm.es");
-		GSClientProvider.setPort("8443");
+		ApplicationContext context = ApplicationContextProvider
+				.getApplicationContext();
+
+		String hostName = (String) context.getBean("hostName");
+		String hostPort = (String) context.getBean("hostPort");
+
+		GSClientProvider.setHost(hostName);
+		GSClientProvider.setPort(hostPort);
 
 		mounts = GSClientProvider.getMountTeleoperationClient();
 		domes = GSClientProvider.getDomeTeleoperationClient();

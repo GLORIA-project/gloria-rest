@@ -5,4 +5,15 @@
 
 	<import resource="classpath*:credentialbeans.xml" />
 
+	<bean id="applicationContextProvider"
+		class="eu.gloria.gs.services.api.security.ApplicationContextProvider"></bean>
+
+	<bean id="hostName" class="java.lang.String">
+		<constructor-arg value="host" />
+	</bean>
+	
+	<bean id="hostPort" class="java.lang.String">
+		<constructor-arg value="8443" />
+	</bean>
+
 </beans>

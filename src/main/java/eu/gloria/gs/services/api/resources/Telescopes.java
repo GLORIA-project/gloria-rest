@@ -25,6 +25,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.springframework.context.ApplicationContext;
+
+import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.repository.rt.RTRepositoryException;
 import eu.gloria.gs.services.repository.rt.RTRepositoryInterface;
@@ -45,8 +48,14 @@ public class Telescopes {
 	private static RTRepositoryInterface telescopes;
 
 	static {
-		GSClientProvider.setHost("venus.datsi.fi.upm.es");
-		GSClientProvider.setPort("8443");
+		ApplicationContext context = ApplicationContextProvider
+				.getApplicationContext();
+
+		String hostName = (String) context.getBean("hostName");
+		String hostPort = (String) context.getBean("hostPort");
+
+		GSClientProvider.setHost(hostName);
+		GSClientProvider.setPort(hostPort);
 
 		telescopes = GSClientProvider.getRTRepositoryClient();
 	}

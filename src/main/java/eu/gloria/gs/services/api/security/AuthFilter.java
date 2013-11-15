@@ -9,6 +9,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response.Status;
 
+import org.springframework.context.ApplicationContext;
 import sun.misc.BASE64Encoder;
 
 import com.sun.jersey.spi.container.ContainerRequest;
@@ -24,14 +25,21 @@ public class AuthFilter implements ContainerRequestFilter {
 
 	private static String adminUsername;
 	private static String adminPassword;
-	
-	static {
-		GSClientProvider.setHost("venus.datsi.fi.upm.es");
-		GSClientProvider.setPort("8443");
 
-		adminPassword = "password";
-		adminUsername = "user";
-		
+	static {
+
+		ApplicationContext context = ApplicationContextProvider
+				.getApplicationContext();
+
+		String hostName = (String) context.getBean("hostName");
+		String hostPort = (String) context.getBean("hostPort");
+
+		GSClientProvider.setHost(hostName);
+		GSClientProvider.setPort(hostPort);
+
+		adminUsername = (String) context.getBean("adminUsername");
+		adminPassword = (String) context.getBean("adminPassword");
+
 		userRepository = GSClientProvider.getUserRepositoryClient();
 	}
 
@@ -50,7 +58,7 @@ public class AuthFilter implements ContainerRequestFilter {
 		// GET, POST, PUT, DELETE, ...
 		String method = containerRequest.getMethod();
 		// myresource/get/56bCA for example
-		//String path = containerRequest.getPath(true);
+		// String path = containerRequest.getPath(true);
 
 		if (method.equals("OPTIONS")) {
 			throw new WebApplicationException(Status.OK);
@@ -73,7 +81,7 @@ public class AuthFilter implements ContainerRequestFilter {
 		 */
 
 		GSClientProvider.setCredentials("dummy", "neh");
-		
+
 		if (auth != null) {
 			// lap : loginAndPassword
 			String[] lap = BasicAuth.decode(auth);
@@ -95,7 +103,7 @@ public class AuthFilter implements ContainerRequestFilter {
 						actualPassword = lap[1];
 					}
 				}
-								
+
 			} catch (UserRepositoryException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -131,5 +139,4 @@ public class AuthFilter implements ContainerRequestFilter {
 
 		return null;
 	}
-
 }

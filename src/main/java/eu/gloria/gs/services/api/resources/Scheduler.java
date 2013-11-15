@@ -20,8 +20,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.springframework.context.ApplicationContext;
+
 import com.sun.jersey.spi.resource.Singleton;
 
+import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.scheduler.SchedulerException;
 import eu.gloria.gs.services.scheduler.SchedulerInterface;
@@ -47,8 +50,14 @@ public class Scheduler {
 	private static SchedulerInterface scheduler;
 
 	static {
-		GSClientProvider.setHost("venus.datsi.fi.upm.es");
-		GSClientProvider.setPort("8443");
+		ApplicationContext context = ApplicationContextProvider
+				.getApplicationContext();
+
+		String hostName = (String) context.getBean("hostName");
+		String hostPort = (String) context.getBean("hostPort");
+
+		GSClientProvider.setHost(hostName);
+		GSClientProvider.setPort(hostPort);
 
 		scheduler = GSClientProvider.getSchedulerClient();
 	}
