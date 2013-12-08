@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="eu.gloria.gs.services.api.data.dbservices.UserDataService">
+
+	<update id="create">
+		CREATE TABLE IF NOT EXISTS `api_user` (
+		`name`
+		varchar(40) NOT NULL,
+		`password` varchar(45) DEFAULT NULL,
+		`token`
+		varchar(40) DEFAULT NULL,
+		`tokenCreationDate` datetime DEFAULT NULL,
+		PRIMARY KEY (`name`),
+		UNIQUE KEY
+		`name_UNIQUE` (`name`)
+		) ENGINE=InnoDB
+		DEFAULT CHARSET=utf8
+	</update>
+
+	<select id="get" resultType="eu.gloria.gs.services.api.data.dbservices.UserEntry">
+		SELECT * FROM
+		`api_user`
+		WHERE
+		name=#{name_}
+	</select>
+
+	<select id="getByToken" resultType="eu.gloria.gs.services.api.data.dbservices.UserEntry">
+		SELECT * FROM
+		`api_user`
+		WHERE
+		token=#{token_}
+	</select>
+
+	<insert id="save" parameterType="eu.gloria.gs.services.api.data.dbservices.UserEntry">
+		INSERT INTO
+		`api_user`
+		(name,
+		password,
+		token, tokenCreationDate)
+		VALUE ( #{name},
+		#{password},
+		#{token}, #{tokenCreationDate} )
+	</insert>
+
+	<delete id="remove">
+		DELETE FROM `api_user`
+		WHERE
+		name=#{name_}
+	</delete>
+
+	<select id="contains" resultType="boolean">
+		SELECT count(*)>0 FROM
+		`api_user`
+		WHERE
+		name=#{name_}
+	</select>
+
+	<select id="getPassword" resultType="string">
+		SELECT password FROM
+		`api_user`
+		WHERE
+		name=#{name_}
+	</select>
+
+	<update id="setPassword">
+		UPDATE `api_user`
+		SET password=
+		#{password_}
+		WHERE name
+		=#{name_}
+	</update>
+
+	<select id="getToken" resultType="string">
+		SELECT token FROM
+		`api_user`
+		WHERE
+		name=#{name_}
+	</select>
+
+	<update id="setToken">
+		UPDATE `api_user`
+		SET token=
+		#{token_}
+		WHERE name
+		=#{name_}
+	</update>
+
+	<select id="getTokenCreationDate" resultType="string">
+		SELECT
+		tokenCreationDate FROM
+		`api_user`
+		WHERE
+		name=#{name_}
+	</select>
+
+	<update id="setTokenCreationDate">
+		UPDATE `api_user`
+		SET tokenCreationDate=
+		#{date_}
+		WHERE name
+		=#{name_}
+	</update>
+
+</mapper>
