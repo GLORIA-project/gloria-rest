@@ -5,15 +5,35 @@
 
 	<import resource="classpath*:credentialbeans.xml" />
 
+	<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="java:comp/env/jdbc/gloriaDB" />
+	</bean>
+
+	<bean id="sqlAPISessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="apiMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface"
+			value="eu.gloria.gs.services.api.data.dbservices.UserDataService" />
+		<property name="sqlSessionFactory" ref="sqlAPISessionFactory" />
+	</bean>
+
+	<bean id="userDataAdapter"
+		class="eu.gloria.gs.services.api.data.UserDataAdapter"
+		scope="singleton" lazy-init="true">
+		<property name="userDataService" ref="apiMapper"></property>
+	</bean>
+
 	<bean id="applicationContextProvider"
 		class="eu.gloria.gs.services.api.security.ApplicationContextProvider"></bean>
 
 	<bean id="hostName" class="java.lang.String">
-		<constructor-arg value="host" />
+		<constructor-arg value="ws.users.gloria-project.eu" />
 	</bean>
-	
+
 	<bean id="hostPort" class="java.lang.String">
-		<constructor-arg value="8443" />
+		<constructor-arg value="443" />
 	</bean>
 
 </beans>

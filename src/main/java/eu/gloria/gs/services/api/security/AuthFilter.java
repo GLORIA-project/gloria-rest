@@ -1,8 +1,6 @@
 package eu.gloria.gs.services.api.security;
 
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
@@ -10,11 +8,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response.Status;
 
 import org.springframework.context.ApplicationContext;
+
 import sun.misc.BASE64Encoder;
 
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
 
+import eu.gloria.gs.services.api.data.UserDataAdapter;
+import eu.gloria.gs.services.api.data.dbservices.UserDataAdapterException;
+import eu.gloria.gs.services.api.data.dbservices.UserEntry;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.repository.user.UserRepositoryException;
 import eu.gloria.gs.services.repository.user.UserRepositoryInterface;
@@ -25,6 +27,7 @@ public class AuthFilter implements ContainerRequestFilter {
 
 	private static String adminUsername;
 	private static String adminPassword;
+	private static UserDataAdapter userAdapter;
 
 	static {
 
@@ -40,6 +43,7 @@ public class AuthFilter implements ContainerRequestFilter {
 		adminUsername = (String) context.getBean("adminUsername");
 		adminPassword = (String) context.getBean("adminPassword");
 
+		userAdapter = (UserDataAdapter) context.getBean("userDataAdapter");
 		userRepository = GSClientProvider.getUserRepositoryClient();
 	}
 
@@ -91,52 +95,60 @@ public class AuthFilter implements ContainerRequestFilter {
 				throw new WebApplicationException(Status.UNAUTHORIZED);
 			}
 
-			String actualPassword = sha1(lap[1]);
+			UserEntry entry = null;
+			String name = null;
+			String actualPassword = null;
 
 			try {
-				GSClientProvider.setCredentials(adminUsername, adminPassword);
-
-				if (!userRepository.authenticateUser(lap[0], actualPassword)) {
-					if (!userRepository.authenticateUser(lap[0], lap[1])) {
-						throw new WebApplicationException(Status.UNAUTHORIZED);
-					} else {
-						actualPassword = lap[1];
-					}
-				}
-
-			} catch (UserRepositoryException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				entry = userAdapter.getUserInformationByToken(lap[1]);
+			} catch (UserDataAdapterException e) {
 			}
 
-			sr.setAttribute("user", lap[0]);
+			boolean authenticated = false;
+
+			if (entry != null) {
+
+				if (new Date().getTime()
+						- entry.getTokenCreationDate().getTime() < 1800000) {
+					name = entry.getName();
+					actualPassword = entry.getPassword();
+					try {
+						userAdapter.updateLastCreationDate(name);
+						authenticated = true;
+					} catch (UserDataAdapterException e) {
+						//throw new WebApplicationException(Status.UNAUTHORIZED);
+					}
+				}
+			}
+
+			if (!authenticated) {
+				actualPassword = SHA1.encode(lap[1]);
+				name = lap[0];
+
+				try {
+					GSClientProvider.setCredentials(adminUsername,
+							adminPassword);
+
+					if (!userRepository
+							.authenticateUser(name, actualPassword)) {
+						if (!userRepository.authenticateUser(name, lap[1])) {
+							throw new WebApplicationException(
+									Status.UNAUTHORIZED);
+						} else {
+							actualPassword = lap[1];
+						}
+					}					
+
+				} catch (UserRepositoryException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+			sr.setAttribute("user", name);
 			sr.setAttribute("password", actualPassword);
 		}
 
 		return containerRequest;
-	}
-
-	private String sha1(String input) {
-		MessageDigest mDigest = null;
-		try {
-			mDigest = MessageDigest.getInstance("SHA1");
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		byte[] bytes;
-		try {
-			bytes = input.getBytes(("UTF-8"));
-			mDigest.update(bytes);
-			byte[] digest = mDigest.digest();
-			String hash = (new BASE64Encoder()).encode(digest);
-			return hash;
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return null;
 	}
 }

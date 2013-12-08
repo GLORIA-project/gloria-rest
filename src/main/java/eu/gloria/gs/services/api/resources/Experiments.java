@@ -27,6 +27,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.springframework.context.ApplicationContext;
 
+import eu.gloria.gs.services.api.data.UserDataAdapter;
 import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.experiment.ExperimentException;
@@ -76,7 +77,7 @@ public class Experiments {
 
 		String hostName = (String) context.getBean("hostName");
 		String hostPort = (String) context.getBean("hostPort");
-
+				
 		GSClientProvider.setHost(hostName);
 		GSClientProvider.setPort(hostPort);
 
@@ -87,7 +88,7 @@ public class Experiments {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/online/register")
 	public Response registerOnlineExperiment(@QueryParam("name") String name) {
-
+		
 		if (request.getAttribute("user") != null) {
 
 			GSClientProvider.setCredentials(
