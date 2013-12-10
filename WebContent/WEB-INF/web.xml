@@ -2,8 +2,8 @@
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
-	id="WebApp_ID" version="2.5">
-
+	id="GLORIAPI" version="2.5">
+	<display-name>GLORIAPI</display-name>
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
 		<param-value>/WEB-INF/APIContext.xml</param-value>
@@ -22,11 +22,13 @@
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
-			<param-value>com.sun.jersey.api.container.filter.LoggingFilter;eu.gloria.gs.services.api.security.AuthFilter</param-value>
+			<param-value>eu.gloria.gs.services.api.security.AuthFilter</param-value>
+			<!-- com.sun.jersey.api.container.filter.LoggingFilter; -->
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
-			<param-value>com.sun.jersey.api.container.filter.LoggingFilter;eu.gloria.gs.services.api.security.ResponseCorsFilter</param-value>
+			<param-value>eu.gloria.gs.services.api.security.ResponseCorsFilter</param-value>
+			<!-- com.sun.jersey.api.container.filter.LoggingFilter; -->
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>

@@ -29,11 +29,11 @@
 		class="eu.gloria.gs.services.api.security.ApplicationContextProvider"></bean>
 
 	<bean id="hostName" class="java.lang.String">
-		<constructor-arg value="ws.users.gloria-project.eu" />
+		<constructor-arg value="localhost" />
 	</bean>
 
 	<bean id="hostPort" class="java.lang.String">
-		<constructor-arg value="443" />
+		<constructor-arg value="8443" />
 	</bean>
 
 </beans>

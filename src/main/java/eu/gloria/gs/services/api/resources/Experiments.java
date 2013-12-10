@@ -7,7 +7,6 @@ package eu.gloria.gs.services.api.resources;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -27,7 +26,6 @@ import javax.ws.rs.core.Response.Status;
 
 import org.springframework.context.ApplicationContext;
 
-import eu.gloria.gs.services.api.data.UserDataAdapter;
 import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.experiment.ExperimentException;
@@ -71,13 +69,13 @@ public class Experiments {
 	private static ExperimentInterface experiments;
 
 	static {
-		
+
 		ApplicationContext context = ApplicationContextProvider
 				.getApplicationContext();
 
 		String hostName = (String) context.getBean("hostName");
 		String hostPort = (String) context.getBean("hostPort");
-				
+
 		GSClientProvider.setHost(hostName);
 		GSClientProvider.setPort(hostPort);
 
@@ -88,7 +86,7 @@ public class Experiments {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/online/register")
 	public Response registerOnlineExperiment(@QueryParam("name") String name) {
-		
+
 		if (request.getAttribute("user") != null) {
 
 			GSClientProvider.setCredentials(
@@ -205,6 +203,56 @@ public class Experiments {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/online/active")
+	public Response listActiveOnlineExperiments() {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			List<ReservationInformation> reservations = experiments
+					.getMyCurrentOnlineReservations();
+
+			return Response.ok(reservations).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (NoReservationsAvailableException e) {
+			return Response.ok(new ArrayList<String>()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/offline/active")
+	public Response listActiveOfflineExperiments() {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			List<ReservationInformation> reservations = experiments
+					.getMyCurrentOfflineReservations();
+
+			return Response.ok(reservations).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (NoReservationsAvailableException e) {
+			return Response.ok(new ArrayList<String>()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/pending")
 	public Response listPendingExperiments() {
 
@@ -218,6 +266,56 @@ public class Experiments {
 		try {
 			List<ReservationInformation> reservations = experiments
 					.getMyPendingReservations();
+
+			return Response.ok(reservations).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (NoReservationsAvailableException e) {
+			return Response.ok(new ArrayList<String>()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/online/pending")
+	public Response listPendingOnlineExperiments() {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			List<ReservationInformation> reservations = experiments
+					.getMyPendingOnlineReservations();
+
+			return Response.ok(reservations).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (NoReservationsAvailableException e) {
+			return Response.ok(new ArrayList<String>()).build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/offline/pending")
+	public Response listPendingOfflineExperiments() {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			List<ReservationInformation> reservations = experiments
+					.getMyPendingOfflineReservations();
 
 			return Response.ok(reservations).build();
 
@@ -400,8 +498,7 @@ public class Experiments {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/context/{rid}")
-	public Response getParameterContext(@PathParam("rid") int rid,
-			@PathParam("parameter") String parameter) {
+	public Response getExperimentContext(@PathParam("rid") int rid) {
 
 		if (request.getAttribute("user") != null) {
 
@@ -412,35 +509,36 @@ public class Experiments {
 
 		try {
 
-			ReservationInformation resInfo = experiments
-					.getReservationInformation(rid);
+			ObjectResponse response = experiments.getExperimentContext(rid);
 
-			ExperimentInformation expInfo = experiments
-					.getExperimentInformation(resInfo.getExperiment());
+			/*
+			 * ReservationInformation resInfo = experiments
+			 * .getReservationInformation(rid);
+			 * 
+			 * ExperimentInformation expInfo = experiments
+			 * .getExperimentInformation(resInfo.getExperiment());
+			 * 
+			 * List<ParameterInformation> parameterInfos =
+			 * expInfo.getParameters(); LinkedHashMap<String, Object> context =
+			 * new LinkedHashMap<>();
+			 * 
+			 * for (ParameterInformation paramInfo : parameterInfos) {
+			 * 
+			 * ObjectResponse response = experiments
+			 * .getExperimentParameterValue(rid, paramInfo.getName());
+			 * 
+			 * Object value = null; Class<?> valueType = Object.class; Class<?>
+			 * elementType = null;
+			 * 
+			 * if (paramInfo.getName().equals(parameter)) { ParameterType type =
+			 * paramInfo.getParameter().getType(); valueType =
+			 * type.getValueType(); elementType = type.getElementType(); }
+			 * 
+			 * context.put(paramInfo.getName(), JSONConverter.fromJSON( (String)
+			 * response.content, valueType, elementType)); }
+			 */
 
-			List<ParameterInformation> parameterInfos = expInfo.getParameters();
-			LinkedHashMap<String, Object> context = new LinkedHashMap<>();
-
-			for (ParameterInformation paramInfo : parameterInfos) {
-
-				ObjectResponse response = experiments
-						.getExperimentParameterValue(rid, paramInfo.getName());
-
-				Object value = null;
-				Class<?> valueType = Object.class;
-				Class<?> elementType = null;
-
-				if (paramInfo.getName().equals(parameter)) {
-					ParameterType type = paramInfo.getParameter().getType();
-					valueType = type.getValueType();
-					elementType = type.getElementType();
-				}
-
-				context.put(paramInfo.getName(), JSONConverter.fromJSON(
-						(String) response.content, valueType, elementType));
-			}
-
-			return Response.ok(context).build();
+			return Response.ok(response.content).build();
 
 		} catch (ExperimentException e) {
 			return Response.serverError().entity(e.getMessage()).build();
@@ -450,7 +548,33 @@ public class Experiments {
 		} catch (ExperimentNotInstantiatedException e) {
 			return Response.status(Status.NOT_ACCEPTABLE)
 					.entity(e.getMessage()).build();
-		} catch (NoSuchExperimentException e) {
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/context/{rid}/ready")
+	public Response isExperimentInstantiated(@PathParam("rid") int rid) {
+
+		if (request.getAttribute("user") != null) {
+
+			GSClientProvider.setCredentials(
+					(String) request.getAttribute("user"),
+					(String) request.getAttribute("password"));
+		}
+
+		try {
+			boolean instantiated = experiments
+					.isExperimentContextInstantiated(rid);
+
+			return Response.ok(instantiated).build();
+
+		} catch (ExperimentException e) {
+			return Response.serverError().entity(e.getMessage()).build();
+		} catch (NoSuchReservationException e) {
+			return Response.status(Status.NOT_ACCEPTABLE)
+					.entity(e.getMessage()).build();
+		} catch (ExperimentNotInstantiatedException e) {
 			return Response.status(Status.NOT_ACCEPTABLE)
 					.entity(e.getMessage()).build();
 		}
@@ -998,7 +1122,7 @@ public class Experiments {
 			if (results == null) {
 				results = new ArrayList<>();
 			}
-			
+
 			if (valuesOnly) {
 
 				List<Object> values = new ArrayList<>();
@@ -1041,7 +1165,6 @@ public class Experiments {
 			List<ResultInformation> results = experiments
 					.getContextResults(rid);
 
-			
 			if (results == null) {
 				results = new ArrayList<>();
 			}
@@ -1057,7 +1180,7 @@ public class Experiments {
 
 				return Response.ok(values).build();
 			}
-			
+
 			for (ResultInformation result : results) {
 				result.setValue(JSONConverter.fromJSON(
 						(String) result.getValue(), Object.class, null));
