@@ -24,9 +24,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.springframework.context.ApplicationContext;
-
-import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.experiment.ExperimentException;
 import eu.gloria.gs.services.experiment.ExperimentInterface;
@@ -41,6 +38,7 @@ import eu.gloria.gs.services.experiment.base.data.ResultInformation;
 import eu.gloria.gs.services.experiment.base.data.TimeSlot;
 import eu.gloria.gs.services.experiment.base.models.DuplicateExperimentException;
 import eu.gloria.gs.services.experiment.base.models.ExperimentFeature;
+import eu.gloria.gs.services.experiment.base.models.InvalidUserContextException;
 import eu.gloria.gs.services.experiment.base.operations.ExperimentOperation;
 import eu.gloria.gs.services.experiment.base.operations.ExperimentOperationException;
 import eu.gloria.gs.services.experiment.base.operations.NoSuchOperationException;
@@ -59,51 +57,32 @@ import eu.gloria.gs.services.experiment.base.reservation.NoSuchReservationExcept
  * 
  */
 @Path("/experiments")
-public class Experiments {
+public class Experiments extends GResource {
 
 	@Context
 	HttpServletRequest request;
 	@Context
 	private HttpHeaders headers;
 
-	private static ExperimentInterface experiments;
-
-	static {
-
-		ApplicationContext context = ApplicationContextProvider
-				.getApplicationContext();
-
-		String hostName = (String) context.getBean("hostName");
-		String hostPort = (String) context.getBean("hostPort");
-
-		GSClientProvider.setHost(hostName);
-		GSClientProvider.setPort(hostPort);
-
-		experiments = GSClientProvider.getOnlineExperimentClient();
-	}
+	private static ExperimentInterface experiments = GSClientProvider
+			.getOnlineExperimentClient();
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/online/register")
 	public Response registerOnlineExperiment(@QueryParam("name") String name) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			experiments.createOnlineExperiment(name);
 
-			return Response.ok().build();
+			return this.processSuccess();
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (DuplicateExperimentException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -112,23 +91,17 @@ public class Experiments {
 	@Path("/offline/register")
 	public Response registerOfflineExperiment(@QueryParam("name") String name) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			experiments.createOfflineExperiment(name);
 
-			return Response.ok().build();
+			return this.processSuccess();
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (DuplicateExperimentException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -137,20 +110,15 @@ public class Experiments {
 	@Path("/online/list")
 	public Response listOnlineExperiments() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<String> names = experiments.getAllOnlineExperiments();
 
-			return Response.ok(names).build();
+			return this.processSuccess(names);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -159,20 +127,15 @@ public class Experiments {
 	@Path("/offline/list")
 	public Response listOfflineExperiments() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<String> names = experiments.getAllOfflineExperiments();
 
-			return Response.ok(names).build();
+			return this.processSuccess(names);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -181,23 +144,18 @@ public class Experiments {
 	@Path("/active")
 	public Response listActiveExperiments() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<ReservationInformation> reservations = experiments
 					.getMyCurrentReservations();
 
-			return Response.ok(reservations).build();
+			return this.processSuccess(reservations);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoReservationsAvailableException e) {
-			return Response.ok(new ArrayList<String>()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -206,23 +164,18 @@ public class Experiments {
 	@Path("/online/active")
 	public Response listActiveOnlineExperiments() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<ReservationInformation> reservations = experiments
 					.getMyCurrentOnlineReservations();
 
-			return Response.ok(reservations).build();
+			return this.processSuccess(reservations);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoReservationsAvailableException e) {
-			return Response.ok(new ArrayList<String>()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -231,23 +184,18 @@ public class Experiments {
 	@Path("/offline/active")
 	public Response listActiveOfflineExperiments() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<ReservationInformation> reservations = experiments
 					.getMyCurrentOfflineReservations();
 
-			return Response.ok(reservations).build();
+			return this.processSuccess(reservations);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoReservationsAvailableException e) {
-			return Response.ok(new ArrayList<String>()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -256,23 +204,18 @@ public class Experiments {
 	@Path("/pending")
 	public Response listPendingExperiments() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<ReservationInformation> reservations = experiments
 					.getMyPendingReservations();
 
-			return Response.ok(reservations).build();
+			return this.processSuccess(reservations);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoReservationsAvailableException e) {
-			return Response.ok(new ArrayList<String>()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -281,23 +224,18 @@ public class Experiments {
 	@Path("/online/pending")
 	public Response listPendingOnlineExperiments() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<ReservationInformation> reservations = experiments
 					.getMyPendingOnlineReservations();
 
-			return Response.ok(reservations).build();
+			return this.processSuccess(reservations);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoReservationsAvailableException e) {
-			return Response.ok(new ArrayList<String>()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -306,23 +244,18 @@ public class Experiments {
 	@Path("/offline/pending")
 	public Response listPendingOfflineExperiments() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<ReservationInformation> reservations = experiments
 					.getMyPendingOfflineReservations();
 
-			return Response.ok(reservations).build();
+			return this.processSuccess(reservations);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoReservationsAvailableException e) {
-			return Response.ok(new ArrayList<String>()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -334,12 +267,7 @@ public class Experiments {
 			@PathParam("month") String month, @PathParam("day") String day,
 			ListAvailableTimeSlotsRequest data) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<TimeSlot> timeSlots = experiments.getAvailableReservations(
@@ -360,12 +288,11 @@ public class Experiments {
 				}
 			}
 
-			return Response.ok(filteredTimeSlots).build();
+			return this.processSuccess(filteredTimeSlots);
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (ExperimentReservationArgumentException e) {
-			return Response.status(Status.BAD_REQUEST).entity(e.getMessage())
-					.build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -375,12 +302,7 @@ public class Experiments {
 	@Path("/online/reserve")
 	public Response reserveExperiment(ReserveOnlineExperimentRequest data) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			TimeSlot timeSlot = new TimeSlot();
@@ -389,19 +311,15 @@ public class Experiments {
 
 			experiments.reserveExperiment(data.getExperiment(),
 					data.getTelescopes(), timeSlot);
-			return Response.ok().build();
+
+			return this.processSuccess();
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
-		} catch (NoReservationsAvailableException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
-		} catch (ExperimentReservationArgumentException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
-		} catch (MaxReservationTimeException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoReservationsAvailableException
+				| ExperimentReservationArgumentException
+				| MaxReservationTimeException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -411,25 +329,19 @@ public class Experiments {
 	public Response applyForExperiment(
 			@QueryParam("experiment") String experiment) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			experiments.applyForExperiment(experiment);
-			return Response.ok().build();
+
+			return this.processSuccess();
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoReservationsAvailableException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (NoSuchExperimentException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -438,12 +350,7 @@ public class Experiments {
 	@Path("/context/{rid}/remaining")
 	public Response getContextRemainingTime(@PathParam("rid") int rid) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
@@ -451,16 +358,14 @@ public class Experiments {
 					.getExperimentRuntimeInformation(rid);
 			long remaining = runtimeInfo.getRemainingTime();
 
-			return Response.ok(remaining).build();
+			return this.processSuccess(remaining);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchReservationException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		} catch (ExperimentNotInstantiatedException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -469,12 +374,7 @@ public class Experiments {
 	@Path("/context/{rid}/elapsed")
 	public Response getContextElapsedTime(@PathParam("rid") int rid) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
@@ -482,16 +382,14 @@ public class Experiments {
 					.getExperimentRuntimeInformation(rid);
 			long elapsed = runtimeInfo.getElapsedTime();
 
-			return Response.ok(elapsed).build();
+			return this.processSuccess(elapsed);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchReservationException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		} catch (ExperimentNotInstantiatedException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -500,83 +398,41 @@ public class Experiments {
 	@Path("/context/{rid}")
 	public Response getExperimentContext(@PathParam("rid") int rid) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
 			ObjectResponse response = experiments.getExperimentContext(rid);
 
-			/*
-			 * ReservationInformation resInfo = experiments
-			 * .getReservationInformation(rid);
-			 * 
-			 * ExperimentInformation expInfo = experiments
-			 * .getExperimentInformation(resInfo.getExperiment());
-			 * 
-			 * List<ParameterInformation> parameterInfos =
-			 * expInfo.getParameters(); LinkedHashMap<String, Object> context =
-			 * new LinkedHashMap<>();
-			 * 
-			 * for (ParameterInformation paramInfo : parameterInfos) {
-			 * 
-			 * ObjectResponse response = experiments
-			 * .getExperimentParameterValue(rid, paramInfo.getName());
-			 * 
-			 * Object value = null; Class<?> valueType = Object.class; Class<?>
-			 * elementType = null;
-			 * 
-			 * if (paramInfo.getName().equals(parameter)) { ParameterType type =
-			 * paramInfo.getParameter().getType(); valueType =
-			 * type.getValueType(); elementType = type.getElementType(); }
-			 * 
-			 * context.put(paramInfo.getName(), JSONConverter.fromJSON( (String)
-			 * response.content, valueType, elementType)); }
-			 */
-
-			return Response.ok(response.content).build();
+			return this.processSuccess(response.content);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchReservationException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
-		} catch (ExperimentNotInstantiatedException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
+		} catch (ExperimentNotInstantiatedException | InvalidUserContextException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/context/{rid}/ready")
-	public Response isExperimentInstantiated(@PathParam("rid") int rid) {
+	public Response isExperimentReady(@PathParam("rid") int rid) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
-			boolean instantiated = experiments
-					.isExperimentContextInstantiated(rid);
+			boolean instantiated = experiments.isExperimentContextReady(rid);
 
-			return Response.ok(instantiated).build();
+			return this.processSuccess(instantiated);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchReservationException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		} catch (ExperimentNotInstantiatedException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -587,12 +443,7 @@ public class Experiments {
 			@PathParam("parameter") String parameter,
 			@QueryParam("tree") String tree) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
@@ -623,23 +474,17 @@ public class Experiments {
 			value = JSONConverter.fromJSON((String) response.content,
 					valueType, elementType);
 
-			// if (valueType.equals(String.class)) {
-			value = JSONConverter.toJSON(value);
-			// }
+			// value = JSONConverter.toJSON(value); // MAY BE I WILL NEED TO
+			// UNCOMMENT THIS LINE!!!!
 
-			return Response.ok(value).build();
+			return this.processSuccess(value);
 
-		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
-		} catch (NoSuchReservationException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
-		} catch (ExperimentNotInstantiatedException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
-		} catch (NoSuchExperimentException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+		} catch (ExperimentParameterException | ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchExperimentException | NoSuchReservationException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		} catch (ExperimentNotInstantiatedException | InvalidUserContextException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -651,12 +496,7 @@ public class Experiments {
 			@PathParam("parameter") String parameter,
 			@QueryParam("tree") String tree, Object data) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		Object castedValue = data;
 
@@ -676,7 +516,9 @@ public class Experiments {
 				}
 			}
 		} catch (ExperimentException | NoSuchExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (InvalidUserContextException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 
 		try {
@@ -690,16 +532,14 @@ public class Experiments {
 
 			experiments.setExperimentParameterValue(rid, parameterTree,
 					new ObjectResponse(castedValue));
-			return Response.ok("[]").build();
+			return this.processSuccess();
 
-		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
 		} catch (NoSuchReservationException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
-		} catch (ExperimentNotInstantiatedException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
+		} catch (ExperimentNotInstantiatedException | InvalidUserContextException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
+		} catch (ExperimentParameterException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -709,12 +549,7 @@ public class Experiments {
 	public Response listOperations(@PathParam("experiment") String experiment,
 			@QueryParam("detailed") boolean detailed) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
@@ -736,10 +571,9 @@ public class Experiments {
 			}
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
-			return Response.status(Status.BAD_REQUEST).entity(e.getMessage())
-					.build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -749,12 +583,7 @@ public class Experiments {
 	public Response listParameters(@PathParam("experiment") String experiment,
 			@QueryParam("detailed") boolean detailed) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
@@ -770,16 +599,15 @@ public class Experiments {
 					}
 				}
 
-				return Response.ok(paramNames).build();
+				return this.processSuccess(paramNames);
 			} else {
-				return Response.ok(parameters).build();
+				return this.processSuccess(parameters);
 			}
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
-			return Response.status(Status.BAD_REQUEST).entity(e.getMessage())
-					.build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -790,12 +618,7 @@ public class Experiments {
 			@PathParam("experiment") String experiment,
 			@PathParam("parameter") String parameter) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
@@ -803,13 +626,12 @@ public class Experiments {
 					.getExperimentInformation(experiment).getParameter(
 							parameter);
 
-			return Response.ok(paramInfo).build();
+			return this.processSuccess(paramInfo);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
-			return Response.status(Status.BAD_REQUEST).entity(e.getMessage())
-					.build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -820,25 +642,19 @@ public class Experiments {
 			@PathParam("experiment") String experiment,
 			@PathParam("operation") String operation) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
 			OperationInformation opInfo = experiments.getExperimentInformation(
 					experiment).getOperation(operation);
 
-			return Response.ok(opInfo).build();
+			return this.processSuccess(opInfo);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
-			return Response.status(Status.BAD_REQUEST).entity(e.getMessage())
-					.build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -848,39 +664,23 @@ public class Experiments {
 	public Response executeOperation(@PathParam("rid") int rid,
 			@PathParam("operation") String operation) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
 			experiments.executeExperimentOperation(rid, operation);
 
-			return Response.ok("[]").build();
+			return this.processSuccess();
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
-		} catch (NoSuchReservationException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
-		} catch (ExperimentNotInstantiatedException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
-		} catch (NoSuchExperimentException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchOperationException | NoSuchExperimentException
+				| NoSuchReservationException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		} catch (ExperimentNotInstantiatedException | InvalidUserContextException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (ExperimentOperationException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
-		} catch (NoSuchOperationException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
-		} catch (ExperimentParameterException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -892,12 +692,7 @@ public class Experiments {
 			@PathParam("experiment") String experiment,
 			ParameterInformation paramInfo) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		String[] argStr = new String[paramInfo.getArguments().length];
 
@@ -912,13 +707,13 @@ public class Experiments {
 			paramInfo.setArguments(argStr);
 
 			experiments.addExperimentParameter(experiment, paramInfo);
-			return Response.ok().build();
+
+			return this.processSuccess();
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -930,22 +725,16 @@ public class Experiments {
 			@PathParam("experiment") String experiment,
 			OperationInformation opInfo) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			experiments.addExperimentOperation(experiment, opInfo);
-			return Response.ok().build();
+			return this.processSuccess();
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -957,22 +746,16 @@ public class Experiments {
 			@PathParam("experiment") String experiment,
 			FeatureInformation featureInfo) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			experiments.addExperimentFeature(experiment, featureInfo);
-			return Response.ok().build();
+			return this.processSuccess();
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -981,18 +764,13 @@ public class Experiments {
 	@Path("/engine/parameters")
 	public Response getAllParameters() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			Set<String> parameters = experiments.getAllExperimentParameters();
-			return Response.ok(parameters).build();
+			return this.processSuccess(parameters);
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -1001,18 +779,13 @@ public class Experiments {
 	@Path("/engine/operations")
 	public Response getAllOperations() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			Set<String> operations = experiments.getAllExperimentOperations();
-			return Response.ok(operations).build();
+			return this.processSuccess(operations);
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -1021,18 +794,13 @@ public class Experiments {
 	@Path("/engine/features")
 	public Response getAllFeatures() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			Set<String> features = experiments.getAllExperimentFeatures();
-			return Response.ok(features).build();
+			return this.processSuccess(features);
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -1041,19 +809,14 @@ public class Experiments {
 	@Path("/engine/parameters/{name}")
 	public Response getExperimentParameter(@PathParam("name") String name) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			ExperimentParameter parameter = experiments
 					.getExperimentParameter(name);
-			return Response.ok(parameter).build();
+			return this.processSuccess(parameter);
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -1062,20 +825,15 @@ public class Experiments {
 	@Path("/engine/operations/{name}")
 	public Response getExperimentOperation(@PathParam("name") String name) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			ExperimentOperation operation = experiments
 					.getExperimentOperation(name);
-			return Response.ok(operation).build();
+			return this.processSuccess(operation);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -1084,19 +842,14 @@ public class Experiments {
 	@Path("/engine/features/{name}")
 	public Response getExperimentFeature(@PathParam("name") String name) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			ExperimentFeature feature = experiments.getExperimentFeature(name);
-			return Response.ok(feature).build();
+			return this.processSuccess(feature);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -1107,12 +860,7 @@ public class Experiments {
 			@PathParam("experiment") String experiment,
 			@QueryParam("valuesOnly") boolean valuesOnly) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
@@ -1132,7 +880,7 @@ public class Experiments {
 							(String) result.getValue(), Object.class, null));
 				}
 
-				return Response.ok(values).build();
+				return this.processSuccess(values);
 			}
 
 			for (ResultInformation result : results) {
@@ -1140,10 +888,10 @@ public class Experiments {
 						(String) result.getValue(), Object.class, null));
 			}
 
-			return Response.ok(results).build();
+			return this.processSuccess(results);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -1153,12 +901,7 @@ public class Experiments {
 	public Response getContextResults(@PathParam("rid") int rid,
 			@QueryParam("valuesOnly") boolean valuesOnly) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
@@ -1178,7 +921,7 @@ public class Experiments {
 							(String) result.getValue(), Object.class, null));
 				}
 
-				return Response.ok(values).build();
+				return this.processSuccess(values);
 			}
 
 			for (ResultInformation result : results) {
@@ -1186,16 +929,14 @@ public class Experiments {
 						(String) result.getValue(), Object.class, null));
 			}
 
-			return Response.ok(results).build();
+			return this.processSuccess(results);
 
 		} catch (ExperimentException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (ExperimentNotInstantiatedException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (NoSuchReservationException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 }

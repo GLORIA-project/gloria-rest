@@ -16,11 +16,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.springframework.context.ApplicationContext;
-
 import eu.gloria.gs.services.api.data.UserDataAdapter;
 import eu.gloria.gs.services.api.data.dbservices.UserDataAdapterException;
-import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 
 /**
@@ -29,26 +26,12 @@ import eu.gloria.gs.services.core.client.GSClientProvider;
  */
 
 @Path("/users")
-public class Users {
+public class Users extends GResource {
 
 	@Context
 	HttpServletRequest request;
 
-	private static UserDataAdapter userAdapter;
-
-	static {
-
-		ApplicationContext context = ApplicationContextProvider
-				.getApplicationContext();
-
-		String hostName = (String) context.getBean("hostName");
-		String hostPort = (String) context.getBean("hostPort");
-
-		GSClientProvider.setHost(hostName);
-		GSClientProvider.setPort(hostPort);
-
-		userAdapter = (UserDataAdapter) context.getBean("userDataAdapter");
-	}
+	private static UserDataAdapter userAdapter = (UserDataAdapter) context.getBean("userDataAdapter");
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)

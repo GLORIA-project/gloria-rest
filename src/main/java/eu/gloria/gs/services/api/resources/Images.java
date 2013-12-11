@@ -21,11 +21,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.springframework.context.ApplicationContext;
-
 import com.sun.jersey.spi.resource.Singleton;
 
-import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.repository.image.ImageRepositoryException;
 import eu.gloria.gs.services.repository.image.ImageRepositoryInterface;
@@ -38,44 +35,20 @@ import eu.gloria.gs.services.repository.image.data.ImageInformation;
 
 @Singleton
 @Path("/images")
-public class Images {
+public class Images extends GResource {
 
 	@Context
 	HttpServletRequest request;
 
-	private static ImageRepositoryInterface images;
-	private static String adminUsername;
-	private static String adminPassword;
-	
-
-	static {
-		ApplicationContext context = ApplicationContextProvider
-				.getApplicationContext();
-
-		String hostName = (String) context.getBean("hostName");
-		String hostPort = (String) context.getBean("hostPort");
-
-		GSClientProvider.setHost(hostName);
-		GSClientProvider.setPort(hostPort);
-		
-		adminPassword = (String) context.getBean("adminPassword");
-		adminUsername = (String) context.getBean("adminUsername");
-
-		images = GSClientProvider.getImageRepositoryClient();
-	}
+	private static ImageRepositoryInterface images = GSClientProvider.getImageRepositoryClient();
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/list")
 	public Response listImages() {
-
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
-
+		
+		this.setupRegularAuthorization(request);
+		
 		try {
 			Calendar calendar = Calendar.getInstance();
 			calendar.setTime(new Date());
@@ -98,7 +71,7 @@ public class Images {
 	@Path("/list/context/{rid}")
 	public Response listImagesByReservation(@PathParam("rid") int rid) {
 
-		GSClientProvider.setCredentials(adminUsername, adminPassword);
+		this.setupPublicAuthorization();
 
 		try {
 
@@ -122,7 +95,7 @@ public class Images {
 	@Path("/list/object/{object}")
 	public Response listImagesByObject(@PathParam("object") String object) {
 
-		GSClientProvider.setCredentials(adminUsername, adminPassword);
+		this.setupPublicAuthorization();
 
 		try {
 
@@ -148,12 +121,7 @@ public class Images {
 			@QueryParam("complete") boolean complete,
 			@QueryParam("maxResults") Integer maxResults) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			Calendar calendar = Calendar.getInstance();
@@ -207,12 +175,7 @@ public class Images {
 	@Path("/{imageId}")
 	public Response getImageInformation(@PathParam("imageId") String id) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 

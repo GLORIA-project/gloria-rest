@@ -20,11 +20,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.springframework.context.ApplicationContext;
-
 import com.sun.jersey.spi.resource.Singleton;
 
-import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.scheduler.SchedulerException;
 import eu.gloria.gs.services.scheduler.SchedulerInterface;
@@ -42,47 +39,28 @@ import eu.gloria.gs.services.scheduler.data.SchedulerDatabaseException;
 
 @Singleton
 @Path("/scheduler")
-public class Scheduler {
+public class Scheduler extends GResource {
 
 	@Context
 	HttpServletRequest request;
 
-	private static SchedulerInterface scheduler;
-
-	static {
-		ApplicationContext context = ApplicationContextProvider
-				.getApplicationContext();
-
-		String hostName = (String) context.getBean("hostName");
-		String hostPort = (String) context.getBean("hostPort");
-
-		GSClientProvider.setHost(hostName);
-		GSClientProvider.setPort(hostPort);
-
-		scheduler = GSClientProvider.getSchedulerClient();
-	}
+	private static SchedulerInterface scheduler = GSClientProvider.getSchedulerClient();
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/plans/{id}")
 	public Response getOPInformation(@PathParam("id") int id) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
 			ScheduleInformation schInfo = scheduler.getScheduleInformation(id);
 
-			return Response.ok(schInfo).build();
+			return this.processSuccess(schInfo);
 
 		} catch (SchedulerException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -94,23 +72,18 @@ public class Scheduler {
 
 		String username = (String) request.getAttribute("user");
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(username,
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			opInfo.setUser(username);
 			int id = scheduler.schedule(opInfo);
-			return Response.ok(id).build();
+			
+			return this.processSuccess(id);
 
 		} catch (SchedulerException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (SchedulerDatabaseException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (MaxUserSchedulesException e) {
 			return Response.status(Status.NOT_ACCEPTABLE)
 					.entity(e.getMessage()).build();
@@ -125,12 +98,7 @@ public class Scheduler {
 	@Path("/plans/active")
 	public Response getMyActivePlans() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
@@ -140,11 +108,12 @@ public class Scheduler {
 				schInfos = new ArrayList<>();
 			}
 
-			return Response.ok(schInfos).build();
+			return this.processSuccess(schInfos);
 
-		} catch (SchedulerException | ScheduleNotFoundException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+		} catch (SchedulerException  e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (ScheduleNotFoundException e) {
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 	
@@ -153,22 +122,18 @@ public class Scheduler {
 	@Path("/plans/inactive")
 	public Response getMyInactivePlans() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
 			List<ScheduleInformation> schInfos = scheduler.getMyInactivePlans();
 
-			return Response.ok(schInfos).build();
+			return this.processSuccess(schInfos);
 
-		} catch (SchedulerException | ScheduleNotFoundException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+		} catch (SchedulerException  e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (ScheduleNotFoundException e) {
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 	
@@ -177,22 +142,18 @@ public class Scheduler {
 	@Path("/{rt}/plans")
 	public Response getRTPlans(@PathParam("rt") String rt) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
 			List<ScheduleInformation> schInfos = scheduler.getAllRTPlans(rt);
 
-			return Response.ok(schInfos).build();
+			return this.processSuccess(schInfos);
 
-		} catch (SchedulerException | ScheduleNotFoundException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+		} catch (SchedulerException  e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (ScheduleNotFoundException e) {
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}	
 	
@@ -201,22 +162,18 @@ public class Scheduler {
 	@Path("/{rt}/plans/active")
 	public Response getActiveRTPlans(@PathParam("rt") String rt) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
 			List<ScheduleInformation> schInfos = scheduler.getActiveRTPlans(rt);
 
-			return Response.ok(schInfos).build();
+			return this.processSuccess(schInfos);
 
-		} catch (SchedulerException | ScheduleNotFoundException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+		} catch (SchedulerException  e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (ScheduleNotFoundException e) {
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 }

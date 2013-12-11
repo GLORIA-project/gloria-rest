@@ -24,10 +24,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
-import org.springframework.context.ApplicationContext;
-
-import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.repository.rt.RTRepositoryException;
 import eu.gloria.gs.services.repository.rt.RTRepositoryInterface;
@@ -40,37 +38,19 @@ import eu.gloria.gs.services.repository.rt.data.RTAvailability;
  * 
  */
 @Path("/telescopes")
-public class Telescopes {
+public class Telescopes extends GResource {
 
 	@Context
 	HttpServletRequest request;
 
-	private static RTRepositoryInterface telescopes;
-
-	static {
-		ApplicationContext context = ApplicationContextProvider
-				.getApplicationContext();
-
-		String hostName = (String) context.getBean("hostName");
-		String hostPort = (String) context.getBean("hostPort");
-
-		GSClientProvider.setHost(hostName);
-		GSClientProvider.setPort(hostPort);
-
-		telescopes = GSClientProvider.getRTRepositoryClient();
-	}
+	private static RTRepositoryInterface telescopes = GSClientProvider.getRTRepositoryClient();
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/list")
 	public Response getAllTelescopes() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<String> completeNames = new ArrayList<>();
@@ -82,10 +62,10 @@ public class Telescopes {
 				completeNames.addAll(names);
 			}
 
-			return Response.ok(completeNames).build();
+			return this.processSuccess(completeNames);
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -94,20 +74,15 @@ public class Telescopes {
 	@Path("/interactive/list")
 	public Response getAllInteractiveTelescopes() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<String> names = telescopes.getAllInteractiveRTs();
 
-			return Response.ok(names).build();
+			return this.processSuccess(names);
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -116,20 +91,15 @@ public class Telescopes {
 	@Path("/batch/list")
 	public Response getAllBatchTelescopes() {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<String> names = telescopes.getAllBatchRTs();
 
-			return Response.ok(names).build();
+			return this.processSuccess(names);
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -140,12 +110,7 @@ public class Telescopes {
 			@QueryParam("detailed") boolean detailed,
 			@QueryParam("type") String type) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<String> names = null;
@@ -166,13 +131,13 @@ public class Telescopes {
 					devices.add(devInfo);
 				}
 
-				return Response.ok(devices).build();
+				return this.processSuccess(devices);
 			} else {
-				return Response.ok(names).build();
+				return this.processSuccess(names);
 			}
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -181,12 +146,7 @@ public class Telescopes {
 	@Path("/{name}")
 	public Response getRTInformation(@PathParam("name") String name) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			Map<String, Object> rtInfo = new LinkedHashMap<>();
@@ -195,10 +155,10 @@ public class Telescopes {
 			rtInfo.put("owner", telescopes.getRTOwner(name));
 			rtInfo.put("coordinates", telescopes.getRTCoordinates(name));
 
-			return Response.ok(rtInfo).build();
+			return this.processSuccess(rtInfo);
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -208,20 +168,15 @@ public class Telescopes {
 	public Response getDeviceInformation(@PathParam("name") String name,
 			Object devName) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			DeviceInformation devInfo = telescopes.getRTDeviceInformation(name,
 					(String) devName);
-			return Response.ok(devInfo).build();
+			return this.processSuccess(devInfo);
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -231,21 +186,16 @@ public class Telescopes {
 	public Response registerInteractiveTelescope(
 			@QueryParam("name") String name, RegisterTelescopeRequest data) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			telescopes.registerInteractiveRT(name, data.getOwner(),
 					data.getUrl(), data.getPort(), data.getUser(),
 					data.getPassword());
-			return Response.ok().build();
+			return this.processSuccess();
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -255,20 +205,15 @@ public class Telescopes {
 	public Response registerBatchTelescope(@QueryParam("name") String name,
 			RegisterTelescopeRequest data) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			telescopes.registerBatchRT(name, data.getOwner(), data.getUrl(),
 					data.getPort(), data.getUser(), data.getPassword());
-			return Response.ok().build();
+			return this.processSuccess();
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -279,18 +224,13 @@ public class Telescopes {
 	public Response setRTAvailability(@PathParam("name") String name,
 			RTAvailability availability) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			telescopes.setRTAvailability(name, availability);
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -299,12 +239,7 @@ public class Telescopes {
 	@Path("/{name}/availability")
 	public Response getRTAvailability(@PathParam("name") String name) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			RTAvailability availability = telescopes.getRTAvailability(name);
@@ -318,9 +253,9 @@ public class Telescopes {
 			availabilityFormatted.put("endingTime",
 					dateFormat.format(availability.getEndingTime()));
 
-			return Response.ok(availabilityFormatted).build();
+			return this.processSuccess(availabilityFormatted);
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 }

@@ -17,10 +17,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
-import org.springframework.context.ApplicationContext;
-
-import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.repository.rt.RTRepositoryException;
 import eu.gloria.gs.services.repository.rt.RTRepositoryInterface;
@@ -32,38 +30,19 @@ import eu.gloria.gs.services.repository.rt.data.ObservatoryInformation;
  */
 
 @Path("/observatories")
-public class Observatories {
+public class Observatories extends GResource {
 
 	@Context
 	HttpServletRequest request;
 
-	private static RTRepositoryInterface telescopes;
-
-	static {
-		
-		ApplicationContext context = ApplicationContextProvider
-				.getApplicationContext();
-
-		String hostName = (String) context.getBean("hostName");
-		String hostPort = (String) context.getBean("hostPort");
-
-		GSClientProvider.setHost(hostName);
-		GSClientProvider.setPort(hostPort);
-
-		telescopes = GSClientProvider.getRTRepositoryClient();
-	}
+	private static RTRepositoryInterface telescopes = GSClientProvider.getRTRepositoryClient();;
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/list")
 	public Response getObservatories(@QueryParam("detailed") boolean detailed) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
@@ -79,13 +58,13 @@ public class Observatories {
 					observatories.add(obsInfo);
 				}
 
-				return Response.ok(observatories).build();
+				return this.processSuccess(observatories);
 			} else {
-				return Response.ok(names).build();
+				return this.processSuccess(names);
 			}
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -96,20 +75,15 @@ public class Observatories {
 
 		name = name.replace("-", " ");
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			ObservatoryInformation obsInfo = telescopes
 					.getObservatoryInformation(name);
-			return Response.ok(obsInfo).build();
+			return this.processSuccess(obsInfo);
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -120,19 +94,14 @@ public class Observatories {
 			@QueryParam("country") String country,
 			@QueryParam("city") String city) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			telescopes.registerObservatory(name, city, country);
-			return Response.ok().build();
+			return this.processSuccess();
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -143,19 +112,14 @@ public class Observatories {
 
 		name = name.replace("-", " ");
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<String> rtNames = telescopes.getAllRTInObservatory(name);
-			return Response.ok(rtNames).build();
+			return this.processSuccess(rtNames);
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -167,19 +131,14 @@ public class Observatories {
 
 		name = name.replace("-", " ");
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			telescopes.setRTObservatory(rt, name);
-			return Response.ok().build();
+			return this.processSuccess();
 
 		} catch (RTRepositoryException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 }

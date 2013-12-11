@@ -18,9 +18,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.springframework.context.ApplicationContext;
+import com.sun.jersey.spi.resource.Singleton;
 
-import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.teleoperation.base.DeviceOperationFailedException;
 import eu.gloria.gs.services.teleoperation.ccd.CCDTeleoperationException;
@@ -46,113 +45,84 @@ import eu.gloria.gs.services.teleoperation.weather.WeatherTeleoperationInterface
  * @author Fernando Serena (fserena@ciclope.info)
  * 
  */
+@Singleton
 @Path("/teleoperation")
-public class Teleoperation {
+public class Teleoperation extends GResource {
 
 	@Context
 	HttpServletRequest request;
 
-	private static MountTeleoperationInterface mounts;
-	private static DomeTeleoperationInterface domes;
-	private static SCamTeleoperationInterface scams;
-	private static CCDTeleoperationInterface ccds;
-	private static FilterWheelTeleoperationInterface filters;
-	private static FocuserTeleoperationInterface focusers;
-	private static WeatherTeleoperationInterface weathers;
-	private static GenericTeleoperationInterface generics;
+	private static MountTeleoperationInterface mounts = GSClientProvider
+			.getMountTeleoperationClient();;
+	private static DomeTeleoperationInterface domes = GSClientProvider
+			.getDomeTeleoperationClient();;
+	private static SCamTeleoperationInterface scams = GSClientProvider
+			.getSCamTeleoperationClient();
+	private static CCDTeleoperationInterface ccds = GSClientProvider
+			.getCCDTeleoperationClient();
+	private static FilterWheelTeleoperationInterface filters = GSClientProvider
+			.getFilterWheelTeleoperationClient();
+	private static FocuserTeleoperationInterface focusers = GSClientProvider
+			.getFocuserTeleoperationClient();
+	private static WeatherTeleoperationInterface weathers = GSClientProvider
+			.getWeatherTeleoperationClient();
+	private static GenericTeleoperationInterface generics = GSClientProvider
+			.getGenericTeleoperationClient();
 
-	static {
-		ApplicationContext context = ApplicationContextProvider
-				.getApplicationContext();
-
-		String hostName = (String) context.getBean("hostName");
-		String hostPort = (String) context.getBean("hostPort");
-
-		GSClientProvider.setHost(hostName);
-		GSClientProvider.setPort(hostPort);
-
-		mounts = GSClientProvider.getMountTeleoperationClient();
-		domes = GSClientProvider.getDomeTeleoperationClient();
-		scams = GSClientProvider.getSCamTeleoperationClient();
-		filters = GSClientProvider.getFilterWheelTeleoperationClient();
-		weathers = GSClientProvider.getWeatherTeleoperationClient();
-		focusers = GSClientProvider.getFocuserTeleoperationClient();
-		ccds = GSClientProvider.getCCDTeleoperationClient();
-		generics = GSClientProvider.getGenericTeleoperationClient();
-	}
-	
 	@GET
 	@Path("/weather/pressure/{rt}/{barometer}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getPressure(@PathParam("rt") String rt,
 			@PathParam("barometer") String barometer) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			double pressure = weathers.getPressure(rt, barometer);
 
-			return Response.ok(pressure).build();
+			return this.processSuccess(pressure);
 		} catch (WeatherTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
-	
+
 	@GET
 	@Path("/weather/wind/{rt}/{wind}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getWindSpeed(@PathParam("rt") String rt,
 			@PathParam("wind") String wind) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			double windSpeed = weathers.getWindSpeed(rt, wind);
 
-			return Response.ok(windSpeed).build();
+			return this.processSuccess(windSpeed);
 		} catch (WeatherTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
-	
+
 	@GET
 	@Path("/weather/rh/{rt}/{rh}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getRelativeHumidity(@PathParam("rt") String rt,
 			@PathParam("rh") String rh) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			double humidity = weathers.getRelativeHumidity(rt, rh);
 
-			return Response.ok(humidity).build();
+			return this.processSuccess(humidity);
 		} catch (WeatherTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -162,22 +132,16 @@ public class Teleoperation {
 	public Response getFilters(@PathParam("rt") String rt,
 			@PathParam("fw") String fw) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			List<String> filterList = filters.getFilters(rt, fw);
 
-			return Response.ok(filterList).build();
+			return this.processSuccess(filterList);
 		} catch (FilterWheelTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -187,12 +151,7 @@ public class Teleoperation {
 	public Response startInteractive(@PathParam("rt") String rt,
 			@QueryParam("seconds") Long seconds) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
@@ -202,10 +161,9 @@ public class Teleoperation {
 				generics.notifyTeleoperation(rt, seconds);
 			}
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (GenericTeleoperationException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -214,21 +172,15 @@ public class Teleoperation {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response startInteractive(@PathParam("rt") String rt) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 
 			generics.stopTeleoperation(rt);
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (GenericTeleoperationException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -238,12 +190,7 @@ public class Teleoperation {
 	public Response focusIn(@PathParam("rt") String rt,
 			@PathParam("focus") String focus, @QueryParam("steps") Long steps) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		if (steps == null) {
 			steps = (long) 100;
@@ -252,12 +199,11 @@ public class Teleoperation {
 		try {
 			focusers.moveRelative(rt, focus, steps);
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (FocuserTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -267,25 +213,19 @@ public class Teleoperation {
 	public Response startContinueMode(@PathParam("rt") String rt,
 			@PathParam("ccd") String ccd) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		ccd = ccd.replace("-", " ");
 
 		try {
 			String id = ccds.startContinueMode(rt, ccd);
 
-			return Response.ok(id).build();
+			return this.processSuccess(id);
 
 		} catch (CCDTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -298,12 +238,7 @@ public class Teleoperation {
 			@QueryParam("brightness") Long brightness,
 			@QueryParam("gain") Long gain, @QueryParam("gamma") Long gamma) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		ccd = ccd.replace("-", " ");
 
@@ -311,11 +246,12 @@ public class Teleoperation {
 
 			try {
 				ccds.setExposureTime(rt, ccd, exposure);
+				
+				return this.processSuccess();
 			} catch (CCDTeleoperationException e) {
-				return Response.serverError().entity(e.getMessage()).build();
+				return this.processError(Status.NOT_ACCEPTABLE, e);
 			} catch (DeviceOperationFailedException e) {
-				return Response.status(Status.INTERNAL_SERVER_ERROR)
-						.entity(e.getMessage()).build();
+				return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 			}
 		}
 
@@ -370,9 +306,9 @@ public class Teleoperation {
 						.entity(e.getMessage()).build();
 			}
 
-			return Response.ok(response).build();
+			return this.processSuccess(response);
 		} else {
-			return Response.ok().build();
+			return this.processSuccess();
 		}
 	}
 
@@ -383,12 +319,7 @@ public class Teleoperation {
 			@PathParam("ccd") String ccd,
 			@QueryParam("exposure") Double exposure) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		ccd = ccd.replace("-", " ");
 
@@ -398,13 +329,12 @@ public class Teleoperation {
 			}
 			String id = ccds.startExposure(rt, ccd);
 
-			return Response.ok(id).build();
+			return this.processSuccess(id);
 
 		} catch (CCDTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -415,12 +345,7 @@ public class Teleoperation {
 			@PathParam("ccd") String ccd, @PathParam("lid") String lid,
 			@QueryParam("format") String format) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		ccd = ccd.replace("-", " ");
 
@@ -432,12 +357,11 @@ public class Teleoperation {
 			String url = ccds.getImageURL(rt, ccd, lid,
 					ImageExtensionFormat.valueOf(format));
 
-			return Response.ok(url).build();
+			return this.processSuccess(url);
 		} catch (CCDTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (ImageNotAvailableException e) {
-			return Response.status(Status.NOT_FOUND).entity(e.getMessage())
-					.build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -447,22 +371,16 @@ public class Teleoperation {
 	public Response stopContinueMode(@PathParam("rt") String rt,
 			@PathParam("ccd") String ccd) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			ccds.stopContinueMode(rt, ccd.replace("-", " "));
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (CCDTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -472,22 +390,16 @@ public class Teleoperation {
 	public Response getSCamUrl(@PathParam("rt") String rt,
 			@PathParam("scam") String scam) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			String url = scams.getImageURL(rt, scam);
 
-			return Response.ok(url).build();
+			return this.processSuccess(url);
 		} catch (SCamTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -497,22 +409,16 @@ public class Teleoperation {
 			@PathParam("mount") String mount,
 			@QueryParam("object") String object) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			mounts.slewToObject(rt, mount, object);
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (MountTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -521,22 +427,16 @@ public class Teleoperation {
 	public Response parkMount(@PathParam("rt") String rt,
 			@PathParam("mount") String mount) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			mounts.park(rt, mount);
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (MountTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -546,22 +446,16 @@ public class Teleoperation {
 			@PathParam("mount") String mount, @QueryParam("ra") double ra,
 			@QueryParam("dec") double dec) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			mounts.slewToCoordinates(rt, mount, ra, dec);
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (MountTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -571,12 +465,7 @@ public class Teleoperation {
 			@PathParam("mount") String mount,
 			@PathParam("direction") String direction) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			if (direction.toLowerCase().equals("north")) {
@@ -589,12 +478,11 @@ public class Teleoperation {
 				mounts.moveWest(rt, mount);
 			}
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (MountTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -603,12 +491,7 @@ public class Teleoperation {
 	public Response manageSlewRate(@PathParam("rt") String rt,
 			@PathParam("mount") String mount, @QueryParam("rate") String rate) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			if (rate != null) {
@@ -617,12 +500,11 @@ public class Teleoperation {
 				// String currentRate = mounts.getSlewRate(rt, mount);
 			}
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (MountTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -631,22 +513,16 @@ public class Teleoperation {
 	public Response openDome(@PathParam("rt") String rt,
 			@PathParam("dome") String dome) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			domes.open(rt, dome);
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (DomeTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -655,22 +531,16 @@ public class Teleoperation {
 	public Response closeDome(@PathParam("rt") String rt,
 			@PathParam("dome") String dome) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			domes.close(rt, dome);
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (DomeTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -679,22 +549,16 @@ public class Teleoperation {
 	public Response parkDome(@PathParam("rt") String rt,
 			@PathParam("dome") String dome) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			domes.park(rt, dome);
 
-			return Response.ok().build();
+			return this.processSuccess();
 		} catch (DomeTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -704,22 +568,16 @@ public class Teleoperation {
 	public Response getDomeAzimuth(@PathParam("rt") String rt,
 			@PathParam("dome") String dome) {
 
-		if (request.getAttribute("user") != null) {
-
-			GSClientProvider.setCredentials(
-					(String) request.getAttribute("user"),
-					(String) request.getAttribute("password"));
-		}
+		this.setupRegularAuthorization(request);
 
 		try {
 			double azimuth = domes.getAzimuth(rt, dome);
 
-			return Response.ok(azimuth).build();
+			return this.processSuccess(azimuth);
 		} catch (DomeTeleoperationException e) {
-			return Response.serverError().entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 }
