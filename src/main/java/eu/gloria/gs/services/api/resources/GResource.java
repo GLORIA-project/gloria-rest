@@ -15,6 +15,7 @@ import org.springframework.context.ApplicationContext;
 
 import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
+import eu.gloria.gs.services.log.action.ActionException;
 
 /**
  * @author Fernando Serena (fserena@ciclope.info)
@@ -30,7 +31,7 @@ public abstract class GResource {
 	static {
 		context = ApplicationContextProvider.getApplicationContext();
 
-		String hostName = (String) context.getBean("hostName");
+		String hostName = (String) context.getBean("hostAddress");
 		String hostPort = (String) context.getBean("hostPort");
 
 		adminPassword = (String) context.getBean("adminPassword");
@@ -79,11 +80,13 @@ public abstract class GResource {
 		return Response.status(status).entity(errorData).build();
 	}
 
-	protected Response processError(Status status, Exception e) {
+	protected Response processError(Status status, ActionException e) {
 
 		LinkedHashMap<String, Object> errorData = new LinkedHashMap<>();
 		errorData.put("type", e.getClass().getSimpleName());
-		errorData.put("message", e.getMessage());
+		String messageStr = e.getJSON();
+		Object message = JSONConverter.fromJSON(messageStr, Object.class, null);
+		errorData.put("message", message);
 
 		return Response.status(status).entity(errorData).build();
 	}

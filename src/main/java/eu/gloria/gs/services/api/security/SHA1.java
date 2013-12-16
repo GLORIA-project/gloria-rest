@@ -8,6 +8,7 @@ import sun.misc.BASE64Encoder;
 
 public class SHA1 {
 
+	@SuppressWarnings("restriction")
 	public static String encode(String input) {
 		MessageDigest mDigest = null;
 		try {

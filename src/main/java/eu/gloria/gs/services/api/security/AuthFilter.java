@@ -9,8 +9,6 @@ import javax.ws.rs.core.Response.Status;
 
 import org.springframework.context.ApplicationContext;
 
-import sun.misc.BASE64Encoder;
-
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
 
@@ -34,7 +32,7 @@ public class AuthFilter implements ContainerRequestFilter {
 		ApplicationContext context = ApplicationContextProvider
 				.getApplicationContext();
 
-		String hostName = (String) context.getBean("hostName");
+		String hostName = (String) context.getBean("hostAddress");
 		String hostPort = (String) context.getBean("hostPort");
 
 		GSClientProvider.setHost(hostName);
@@ -116,7 +114,8 @@ public class AuthFilter implements ContainerRequestFilter {
 						userAdapter.updateLastCreationDate(name);
 						authenticated = true;
 					} catch (UserDataAdapterException e) {
-						//throw new WebApplicationException(Status.UNAUTHORIZED);
+						// throw new
+						// WebApplicationException(Status.UNAUTHORIZED);
 					}
 				}
 			}
@@ -129,15 +128,14 @@ public class AuthFilter implements ContainerRequestFilter {
 					GSClientProvider.setCredentials(adminUsername,
 							adminPassword);
 
-					if (!userRepository
-							.authenticateUser(name, actualPassword)) {
+					if (!userRepository.authenticateUser(name, actualPassword)) {
 						if (!userRepository.authenticateUser(name, lap[1])) {
 							throw new WebApplicationException(
 									Status.UNAUTHORIZED);
 						} else {
 							actualPassword = lap[1];
 						}
-					}					
+					}
 
 				} catch (UserRepositoryException e) {
 					// TODO Auto-generated catch block

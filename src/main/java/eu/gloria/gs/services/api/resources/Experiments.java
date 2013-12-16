@@ -42,15 +42,18 @@ import eu.gloria.gs.services.experiment.base.models.InvalidUserContextException;
 import eu.gloria.gs.services.experiment.base.operations.ExperimentOperation;
 import eu.gloria.gs.services.experiment.base.operations.ExperimentOperationException;
 import eu.gloria.gs.services.experiment.base.operations.NoSuchOperationException;
+import eu.gloria.gs.services.experiment.base.operations.OperationTypeNotAvailableException;
+import eu.gloria.gs.services.experiment.base.parameters.NoSuchParameterException;
 import eu.gloria.gs.services.experiment.base.parameters.ExperimentParameter;
 import eu.gloria.gs.services.experiment.base.parameters.ExperimentParameterException;
-import eu.gloria.gs.services.experiment.base.parameters.ObjectResponse;
 import eu.gloria.gs.services.experiment.base.parameters.ParameterType;
+import eu.gloria.gs.services.experiment.base.parameters.ParameterTypeNotAvailableException;
 import eu.gloria.gs.services.experiment.base.reservation.ExperimentNotInstantiatedException;
 import eu.gloria.gs.services.experiment.base.reservation.ExperimentReservationArgumentException;
 import eu.gloria.gs.services.experiment.base.reservation.MaxReservationTimeException;
 import eu.gloria.gs.services.experiment.base.reservation.NoReservationsAvailableException;
 import eu.gloria.gs.services.experiment.base.reservation.NoSuchReservationException;
+import eu.gloria.gs.services.utils.ObjectResponse;
 
 /**
  * @author Fernando Serena (fserena@ciclope.info)
@@ -366,6 +369,8 @@ public class Experiments extends GResource {
 			return this.processError(Status.NOT_FOUND, e);
 		} catch (ExperimentNotInstantiatedException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
+		} catch (InvalidUserContextException e) {
+			return this.processError(Status.FORBIDDEN, e);
 		}
 	}
 
@@ -390,6 +395,8 @@ public class Experiments extends GResource {
 			return this.processError(Status.NOT_FOUND, e);
 		} catch (ExperimentNotInstantiatedException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
+		} catch (InvalidUserContextException e) {
+			return this.processError(Status.FORBIDDEN, e);
 		}
 	}
 
@@ -404,14 +411,17 @@ public class Experiments extends GResource {
 
 			ObjectResponse response = experiments.getExperimentContext(rid);
 
-			return this.processSuccess(response.content);
+			return this.processSuccess(JSONConverter.fromJSON(
+					(String) response.content, Object.class, null));
 
 		} catch (ExperimentException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
-		} catch (NoSuchReservationException e) {
+		} catch (NoSuchReservationException | NoSuchParameterException e) {
 			return this.processError(Status.NOT_FOUND, e);
-		} catch (ExperimentNotInstantiatedException | InvalidUserContextException e) {
+		} catch (ExperimentNotInstantiatedException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
+		} catch (InvalidUserContextException e) {
+			return this.processError(Status.FORBIDDEN, e);
 		}
 	}
 
@@ -474,17 +484,17 @@ public class Experiments extends GResource {
 			value = JSONConverter.fromJSON((String) response.content,
 					valueType, elementType);
 
-			// value = JSONConverter.toJSON(value); // MAY BE I WILL NEED TO
-			// UNCOMMENT THIS LINE!!!!
-
 			return this.processSuccess(value);
 
-		} catch (ExperimentParameterException | ExperimentException e) {
+		} catch (ExperimentException | ExperimentParameterException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
-		} catch (NoSuchExperimentException | NoSuchReservationException e) {
+		} catch (NoSuchExperimentException | NoSuchReservationException
+				| NoSuchParameterException e) {
 			return this.processError(Status.NOT_FOUND, e);
-		} catch (ExperimentNotInstantiatedException | InvalidUserContextException e) {
+		} catch (ExperimentNotInstantiatedException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
+		} catch (InvalidUserContextException e) {
+			return this.processError(Status.FORBIDDEN, e);
 		}
 	}
 
@@ -518,7 +528,9 @@ public class Experiments extends GResource {
 		} catch (ExperimentException | NoSuchExperimentException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (InvalidUserContextException e) {
-			return this.processError(Status.NOT_ACCEPTABLE, e);
+			return this.processError(Status.FORBIDDEN, e);
+		} catch (NoSuchReservationException e) {
+			return this.processError(Status.NOT_FOUND, e);
 		}
 
 		try {
@@ -534,12 +546,14 @@ public class Experiments extends GResource {
 					new ObjectResponse(castedValue));
 			return this.processSuccess();
 
-		} catch (NoSuchReservationException e) {
+		} catch (NoSuchReservationException | NoSuchParameterException e) {
 			return this.processError(Status.NOT_FOUND, e);
-		} catch (ExperimentNotInstantiatedException | InvalidUserContextException e) {
+		} catch (ExperimentNotInstantiatedException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (ExperimentParameterException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (InvalidUserContextException e) {
+			return this.processError(Status.FORBIDDEN, e);
 		}
 	}
 
@@ -672,15 +686,15 @@ public class Experiments extends GResource {
 
 			return this.processSuccess();
 
-		} catch (ExperimentException e) {
+		} catch (ExperimentException | ExperimentOperationException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchOperationException | NoSuchExperimentException
 				| NoSuchReservationException e) {
 			return this.processError(Status.NOT_FOUND, e);
-		} catch (ExperimentNotInstantiatedException | InvalidUserContextException e) {
+		} catch (ExperimentNotInstantiatedException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
-		} catch (ExperimentOperationException e) {
-			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (InvalidUserContextException e) {
+			return this.processError(Status.FORBIDDEN, e);
 		}
 	}
 
@@ -714,6 +728,8 @@ public class Experiments extends GResource {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
 			return this.processError(Status.NOT_FOUND, e);
+		} catch (NoSuchParameterException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -756,6 +772,9 @@ public class Experiments extends GResource {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
 			return this.processError(Status.NOT_FOUND, e);
+		} catch (OperationTypeNotAvailableException
+				| ParameterTypeNotAvailableException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
