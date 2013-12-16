@@ -75,7 +75,7 @@ public abstract class GResource {
 
 		LinkedHashMap<String, Object> errorData = new LinkedHashMap<>();
 		errorData.put("type", errorName);
-		errorData.put("message", message);
+		errorData.put("description", message);
 
 		return Response.status(status).entity(errorData).build();
 	}
@@ -84,9 +84,9 @@ public abstract class GResource {
 
 		LinkedHashMap<String, Object> errorData = new LinkedHashMap<>();
 		errorData.put("type", e.getClass().getSimpleName());
-		String messageStr = e.getJSON();
+		String messageStr = e.getMessage();
 		Object message = JSONConverter.fromJSON(messageStr, Object.class, null);
-		errorData.put("message", message);
+		errorData.put("description", message);
 
 		return Response.status(status).entity(errorData).build();
 	}
