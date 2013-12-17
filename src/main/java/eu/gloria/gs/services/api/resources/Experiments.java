@@ -441,8 +441,28 @@ public class Experiments extends GResource {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchReservationException e) {
 			return this.processError(Status.NOT_FOUND, e);
-		} catch (ExperimentNotInstantiatedException e) {
-			return this.processError(Status.NOT_ACCEPTABLE, e);
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/context/{rid}/info")
+	public Response getReservationInfo(@PathParam("rid") int rid) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+			ReservationInformation resInfo = experiments
+					.getReservationInformation(rid);
+
+			return this.processSuccess(resInfo);
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchReservationException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		} catch (InvalidUserContextException e) {
+			return this.processError(Status.FORBIDDEN, e);
 		}
 	}
 

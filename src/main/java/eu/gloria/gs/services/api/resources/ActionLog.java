@@ -36,7 +36,8 @@ public class ActionLog extends GResource {
 	@Context
 	HttpServletRequest request;
 
-	private static ActionLogInterface log = GSClientProvider.getActionLogClient();
+	private static ActionLogInterface log = GSClientProvider
+			.getActionLogClient();
 
 	private Date beginDateOf(Date date) {
 		Calendar calendar = Calendar.getInstance();
@@ -45,10 +46,10 @@ public class ActionLog extends GResource {
 		calendar.set(Calendar.MINUTE, 0);
 		calendar.set(Calendar.SECOND, 0);
 		calendar.set(Calendar.MILLISECOND, 0);
-		
+
 		return calendar.getTime();
 	}
-	
+
 	private Date endDateOf(Date date) {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(date);
@@ -56,135 +57,212 @@ public class ActionLog extends GResource {
 		calendar.set(Calendar.MINUTE, 59);
 		calendar.set(Calendar.SECOND, 59);
 		calendar.set(Calendar.MILLISECOND, 999);
-		
+
 		return calendar.getTime();
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/today")
 	public Response getTodaysLog() {
-		
+
 		this.setupRegularAuthorization(request);
-		
+
 		Date today = new Date();
-		
+
 		ObjectResponse response;
 		try {
 			response = log.getAllDateLogs(beginDateOf(today), endDateOf(today));
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
-		}		
+		}
 	}
-	
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{year}/{month}/{day}")
+	public Response getDateLog(@PathParam("year") int year,
+			@PathParam("month") int month, @PathParam("day") int day) {
+
+		this.setupRegularAuthorization(request);
+
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.DAY_OF_MONTH, Integer.valueOf(day));
+		calendar.set(Calendar.MONTH, Integer.valueOf(month) - 1);
+		calendar.set(Calendar.YEAR, Integer.valueOf(year));
+
+		Date date = calendar.getTime();
+
+		ObjectResponse response;
+		try {
+			response = log.getAllDateLogs(beginDateOf(date), endDateOf(date));
+			return Response.ok(response.content).build();
+		} catch (ActionLogException e) {
+			return Response.serverError().build();
+		}
+	}
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/infos/today")
 	public Response getTodaysInfoLog() {
-		
+
 		this.setupRegularAuthorization(request);
-		
+
 		Date today = new Date();
-		
+
 		ObjectResponse response;
 		try {
-			response = log.getInfoLogsByDate(beginDateOf(today), endDateOf(today));
+			response = log.getInfoLogsByDate(beginDateOf(today),
+					endDateOf(today));
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
-		}		
+		}
 	}
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/errors/today")
-	public Response getTodaysErrorLog() {
-		
+	@Path("/infos/{year}/{month}/{day}")
+	public Response getDateInfoLog(@PathParam("year") int year,
+			@PathParam("month") int month, @PathParam("day") int day) {
+
 		this.setupRegularAuthorization(request);
-		
-		Date today = new Date();
-		
+
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.DAY_OF_MONTH, Integer.valueOf(day));
+		calendar.set(Calendar.MONTH, Integer.valueOf(month) - 1);
+		calendar.set(Calendar.YEAR, Integer.valueOf(year));
+
+		Date date = calendar.getTime();
+
 		ObjectResponse response;
 		try {
-			response = log.getErrorLogsByDate(beginDateOf(today), endDateOf(today));
+			response = log.getInfoLogsByDate(beginDateOf(date), endDateOf(date));
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
-		}		
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/errors/today")
+	public Response getTodaysErrorLog() {
+
+		this.setupRegularAuthorization(request);
+
+		Date today = new Date();
+
+		ObjectResponse response;
+		try {
+			response = log.getErrorLogsByDate(beginDateOf(today),
+					endDateOf(today));
+			return Response.ok(response.content).build();
+		} catch (ActionLogException e) {
+			return Response.serverError().build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/errors/{year}/{month}/{day}")
+	public Response getDateErrorLog(@PathParam("year") int year,
+			@PathParam("month") int month, @PathParam("day") int day) {
+
+		this.setupRegularAuthorization(request);
+
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.DAY_OF_MONTH, Integer.valueOf(day));
+		calendar.set(Calendar.MONTH, Integer.valueOf(month) - 1);
+		calendar.set(Calendar.YEAR, Integer.valueOf(year));
+
+		Date date = calendar.getTime();
+
+		ObjectResponse response;
+		try {
+			response = log.getErrorLogsByDate(beginDateOf(date), endDateOf(date));
+			return Response.ok(response.content).build();
+		} catch (ActionLogException e) {
+			return Response.serverError().build();
+		}
 	}
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/context/{rid}")
 	public Response getContextLog(@PathParam("rid") int rid) {
-		
+
 		this.setupRegularAuthorization(request);
-		
+
 		Date today = new Date();
-		
+
 		ObjectResponse response;
 		try {
-			response = log.getAllRidLogsByDate(rid, beginDateOf(today), endDateOf(today));
+			response = log.getAllRidLogsByDate(rid, beginDateOf(today),
+					endDateOf(today));
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
-		}		
+		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/context/{rid}/infos")
 	public Response getContextInfoLog(@PathParam("rid") int rid) {
-		
+
 		this.setupRegularAuthorization(request);
-		
+
 		Date today = new Date();
-		
+
 		ObjectResponse response;
 		try {
-			response = log.getInfoRidLogsByDate(rid, beginDateOf(today), endDateOf(today));
+			response = log.getInfoRidLogsByDate(rid, beginDateOf(today),
+					endDateOf(today));
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
-		}		
+		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/context/{rid}/warnings")
 	public Response getContextWarningLog(@PathParam("rid") int rid) {
-		
+
 		this.setupRegularAuthorization(request);
-		
+
 		Date today = new Date();
-		
+
 		ObjectResponse response;
 		try {
-			response = log.getWarningRidLogsByDate(rid, beginDateOf(today), endDateOf(today));
+			response = log.getWarningRidLogsByDate(rid, beginDateOf(today),
+					endDateOf(today));
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
-		}		
+		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/context/{rid}/errors")
 	public Response getContextErrorLog(@PathParam("rid") int rid) {
-		
+
 		this.setupRegularAuthorization(request);
-		
+
 		Date today = new Date();
-		
+
 		ObjectResponse response;
 		try {
-			response = log.getWarningRidLogsByDate(rid, beginDateOf(today), endDateOf(today));
+			response = log.getWarningRidLogsByDate(rid, beginDateOf(today),
+					endDateOf(today));
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
-		}		
+		}
 	}
-
 
 }

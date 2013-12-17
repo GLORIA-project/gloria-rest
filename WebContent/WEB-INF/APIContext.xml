@@ -3,19 +3,15 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<import resource="classpath*:credentialbeans.xml" />
-
 	<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
 		<property name="jndiName" value="java:comp/env/jdbc/gloriaDB" />
 	</bean>
 
-	<bean id="hostAddress"
-		class="org.springframework.jndi.JndiObjectFactoryBean">
+	<bean id="hostAddress" class="org.springframework.jndi.JndiObjectFactoryBean">
 		<property name="jndiName" value="java:comp/env/apiHostAddress" />
 	</bean>
 
-	<bean id="hostPort"
-		class="org.springframework.jndi.JndiObjectFactoryBean">
+	<bean id="hostPort" class="org.springframework.jndi.JndiObjectFactoryBean">
 		<property name="jndiName" value="java:comp/env/apiHostPort" />
 	</bean>
 
@@ -36,5 +32,13 @@
 
 	<bean id="applicationContextProvider"
 		class="eu.gloria.gs.services.api.security.ApplicationContextProvider"></bean>
+
+	<bean id="adminUsername" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="java:comp/env/adminUsername" />
+	</bean>
+
+	<bean id="adminPassword" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="java:comp/env/adminPassword" />
+	</bean>
 
 </beans>

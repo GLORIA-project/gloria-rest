@@ -5,6 +5,7 @@
  */
 package eu.gloria.gs.services.api.resources;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import javax.servlet.http.HttpServletRequest;
@@ -39,6 +40,17 @@ public abstract class GResource {
 
 		GSClientProvider.setHost(hostName);
 		GSClientProvider.setPort(hostPort);
+	}
+
+	protected void addInterfaceOperation(HashMap<String, Object> container,
+			String name, String path, String description, String method) {
+
+		LinkedHashMap<String, String> op = new LinkedHashMap<String, String>();
+		op.put("path", path);
+		op.put("method", method);
+		op.put("description", description);
+
+		container.put(name, op);
 	}
 
 	public static String getAdminUsername() {

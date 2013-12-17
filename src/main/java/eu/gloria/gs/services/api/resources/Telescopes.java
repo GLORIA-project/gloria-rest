@@ -32,6 +32,7 @@ import eu.gloria.gs.services.repository.rt.RTRepositoryInterface;
 import eu.gloria.gs.services.repository.rt.data.DeviceInformation;
 import eu.gloria.gs.services.repository.rt.data.DeviceType;
 import eu.gloria.gs.services.repository.rt.data.RTAvailability;
+import eu.gloria.gs.services.repository.rt.data.RTInformation;
 
 /**
  * @author Fernando Serena (fserena@ciclope.info)
@@ -43,7 +44,25 @@ public class Telescopes extends GResource {
 	@Context
 	HttpServletRequest request;
 
-	private static RTRepositoryInterface telescopes = GSClientProvider.getRTRepositoryClient();
+	private static RTRepositoryInterface telescopes = GSClientProvider
+			.getRTRepositoryClient();
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/interface")
+	public Response getInterface() {
+
+		this.setupRegularAuthorization(request);
+
+		LinkedHashMap<String, Object> operations = new LinkedHashMap<String, Object>();
+
+		this.addInterfaceOperation(operations, "get all telescopes", "/list",
+				"", "get");
+		this.addInterfaceOperation(operations, "get all interactive telescopes", "/interactive/list",
+				"", "get");
+
+		return this.processSuccess(operations);
+	}
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -149,13 +168,17 @@ public class Telescopes extends GResource {
 		this.setupRegularAuthorization(request);
 
 		try {
-			Map<String, Object> rtInfo = new LinkedHashMap<>();
+			Map<String, Object> rtInfoMap = new LinkedHashMap<>();
 
-			rtInfo.put("description", telescopes.getRTDescription(name));
-			rtInfo.put("owner", telescopes.getRTOwner(name));
-			rtInfo.put("coordinates", telescopes.getRTCoordinates(name));
+			RTInformation rtInfo = telescopes.getRTInformation(name);
 
-			return this.processSuccess(rtInfo);
+			rtInfoMap.put("description", rtInfo.getDescription());
+			rtInfoMap.put("owner", rtInfo.getOwner());
+			rtInfoMap.put("coordinates", rtInfo.getCoordinates());
+			rtInfoMap.put("image", rtInfo.getImage());
+			rtInfoMap.put("date", rtInfo.getRegistrationDate());
+
+			return this.processSuccess(rtInfoMap);
 
 		} catch (RTRepositoryException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
@@ -254,6 +277,56 @@ public class Telescopes extends GResource {
 					dateFormat.format(availability.getEndingTime()));
 
 			return this.processSuccess(availabilityFormatted);
+		} catch (RTRepositoryException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		}
+	}
+
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{name}/image")
+	public Response setRTImage(@PathParam("name") String name, String image) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+			telescopes.setRTImage(name,
+					(String) JSONConverter.fromJSON(image, String.class, null));
+			return this.processSuccess();
+		} catch (RTRepositoryException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		}
+	}
+
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{name}/description")
+	public Response setRTDescription(@PathParam("name") String name,
+			String description) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+			telescopes.setRTDescription(name, (String) JSONConverter.fromJSON(
+					description, String.class, null));
+			return this.processSuccess();
+		} catch (RTRepositoryException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{name}/image")
+	public Response getRTImage(@PathParam("name") String name) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+			String image = telescopes.getRTImage(name);
+			return this.processSuccess(image);
 		} catch (RTRepositoryException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
