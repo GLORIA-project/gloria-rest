@@ -2,8 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper
-	namespace="eu.gloria.gs.services.api.data.dbservices.UserDataService">
+<mapper namespace="eu.gloria.gs.services.api.data.dbservices.UserDataService">
 
 	<update id="create">
 		CREATE TABLE IF NOT EXISTS `api_user` (
@@ -11,13 +10,17 @@
 		varchar(40) NOT NULL,
 		`password` varchar(45) DEFAULT NULL,
 		`token`
-		varchar(40) DEFAULT NULL,
+		varchar(40) NOT NULL,
 		`tokenCreationDate` datetime DEFAULT NULL,
-		PRIMARY KEY (`name`),
-		UNIQUE KEY
-		`name_UNIQUE` (`name`)
-		) ENGINE=InnoDB
-		DEFAULT CHARSET=utf8
+		`tokenUpdateDate` datetime DEFAULT NULL,
+		`locale` varchar(10) DEFAULT
+		NULL,
+		`remote` varchar(200) DEFAULT NULL,		
+		`agent` text DEFAULT NULL,
+		`active` int(11) NOT NULL DEFAULT '0',
+		PRIMARY KEY (`name`,`token`)
+		)
+		ENGINE=InnoDB DEFAULT CHARSET=utf8
 	</update>
 
 	<select id="get" resultType="eu.gloria.gs.services.api.data.dbservices.UserEntry">
@@ -25,6 +28,13 @@
 		`api_user`
 		WHERE
 		name=#{name_}
+	</select>
+
+	<select id="getActive" resultType="eu.gloria.gs.services.api.data.dbservices.UserEntry">
+		SELECT * FROM
+		`api_user`
+		WHERE
+		name=#{name_} AND active=1
 	</select>
 
 	<select id="getByToken" resultType="eu.gloria.gs.services.api.data.dbservices.UserEntry">
@@ -39,11 +49,30 @@
 		`api_user`
 		(name,
 		password,
-		token, tokenCreationDate)
+		token, tokenCreationDate, tokenUpdateDate, locale, remote, agent)
 		VALUE ( #{name},
 		#{password},
-		#{token}, #{tokenCreationDate} )
+		#{token}, #{tokenCreationDate},
+		#{tokenUpdateDate}, #{locale}, #{remote}, #{agent} )
 	</insert>
+
+	<update id="setActive">
+		UPDATE `api_user`
+		SET active=1
+		WHERE token=#{token_}
+	</update>
+
+	<update id="setInactive">
+		UPDATE `api_user`
+		SET active=0
+		WHERE token=#{token_}
+	</update>
+
+	<update id="setOthersInactive">
+		UPDATE `api_user`
+		SET active=0
+		WHERE name=#{name_} AND token!=#{token_}
+	</update>
 
 	<delete id="remove">
 		DELETE FROM `api_user`
@@ -51,11 +80,18 @@
 		name=#{name_}
 	</delete>
 
-	<select id="contains" resultType="boolean">
+	<select id="containsUser" resultType="boolean">
 		SELECT count(*)>0 FROM
 		`api_user`
 		WHERE
 		name=#{name_}
+	</select>
+
+	<select id="containsToken" resultType="boolean">
+		SELECT count(*)>0 FROM
+		`api_user`
+		WHERE
+		token=#{token_}
 	</select>
 
 	<select id="getPassword" resultType="string">
@@ -73,35 +109,19 @@
 		=#{name_}
 	</update>
 
-	<select id="getToken" resultType="string">
-		SELECT token FROM
-		`api_user`
-		WHERE
-		name=#{name_}
-	</select>
-
-	<update id="setToken">
-		UPDATE `api_user`
-		SET token=
-		#{token_}
-		WHERE name
-		=#{name_}
-	</update>
-
-	<select id="getTokenCreationDate" resultType="string">
+	<select id="getTokenUpdateDate" resultType="date">
 		SELECT
-		tokenCreationDate FROM
+		tokenUpdateDate FROM
 		`api_user`
-		WHERE
-		name=#{name_}
+		WHERE token=#{token_}
 	</select>
 
-	<update id="setTokenCreationDate">
+	<update id="setTokenUpdateDate">
 		UPDATE `api_user`
-		SET tokenCreationDate=
+		SET tokenUpdateDate=
 		#{date_}
-		WHERE name
-		=#{name_}
+		WHERE
+		token=#{token_}
 	</update>
 
 </mapper>

@@ -35,7 +35,7 @@ public class Observatories extends GResource {
 	@Context
 	HttpServletRequest request;
 
-	private static RTRepositoryInterface telescopes = GSClientProvider.getRTRepositoryClient();;
+	private static RTRepositoryInterface telescopes = GSClientProvider.getRTRepositoryClient();
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)

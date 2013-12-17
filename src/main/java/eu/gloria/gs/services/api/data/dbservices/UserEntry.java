@@ -9,6 +9,51 @@ public class UserEntry {
 	private String roles;
 	private String token;
 	private Date tokenCreationDate;
+	private Date tokenUpdateDate;
+	private int active;
+	private String locale;
+	private String remote;
+	private String agent;
+
+	public String getAgent() {
+		return agent;
+	}
+
+	public void setAgent(String agent) {
+		this.agent = agent;
+	}
+
+	public Date getTokenUpdateDate() {
+		return tokenUpdateDate;
+	}
+
+	public void setTokenUpdateDate(Date tokenUpdateDate) {
+		this.tokenUpdateDate = tokenUpdateDate;
+	}
+
+	public int getActive() {
+		return active;
+	}
+
+	public void setActive(int active) {
+		this.active = active;
+	}
+
+	public String getLocale() {
+		return locale;
+	}
+
+	public void setLocale(String locale) {
+		this.locale = locale;
+	}
+
+	public String getRemote() {
+		return remote;
+	}
+
+	public void setRemote(String remote) {
+		this.remote = remote;
+	}
 
 	public String getName() {
 		return name;

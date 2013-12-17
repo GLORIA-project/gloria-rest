@@ -1,6 +1,7 @@
 package eu.gloria.gs.services.api.security;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
@@ -104,19 +105,21 @@ public class AuthFilter implements ContainerRequestFilter {
 
 			boolean authenticated = false;
 
-			if (entry != null) {
+			if (entry != null && entry.getActive() > 0) {
 
 				if (new Date().getTime()
 						- entry.getTokenCreationDate().getTime() < 1800000) {
 					name = entry.getName();
 					actualPassword = entry.getPassword();
 					try {
-						userAdapter.updateLastCreationDate(name);
+						userAdapter.updateLastDate(entry.getToken());
 						authenticated = true;
 					} catch (UserDataAdapterException e) {
 						// throw new
 						// WebApplicationException(Status.UNAUTHORIZED);
 					}
+				} else {
+					userAdapter.deactivateToken(entry.getToken());
 				}
 			}
 
@@ -137,7 +140,53 @@ public class AuthFilter implements ContainerRequestFilter {
 						}
 					}
 
+					String userAgent = containerRequest
+							.getHeaderValue(ContainerRequest.USER_AGENT);
+					String remote = containerRequest
+							.getHeaderValue(ContainerRequest.HOST);
+					String acceptLanguage = containerRequest
+							.getHeaderValue(ContainerRequest.ACCEPT_LANGUAGE);
+
+					if (acceptLanguage != null) {
+						String[] languages = acceptLanguage.split(";");
+
+						if (languages.length > 0) {
+							acceptLanguage = languages[0];
+						}
+					}
+
+					List<UserEntry> actives = userAdapter
+							.getUserInformation(name);
+
+					boolean newToken = false;
+
+					if (actives != null && actives.size() > 0) {
+						for (UserEntry user : actives) {
+							if (!remote.equals(user.getRemote())
+									|| !userAgent.equals(user.getAgent())) {
+								userAdapter.deactivateToken(user.getToken());
+								newToken = true;
+							}
+						}
+					} else {
+						newToken = true;
+					}
+
+					if (newToken) {
+						String token = userAdapter.createToken(name,
+								actualPassword, acceptLanguage, userAgent,
+								remote);
+
+						userAdapter.activateToken(token);
+						userAdapter.deactivateOtherTokens(name, token);
+
+					} else {
+						userAdapter.updateLastDate(actives.get(0).getToken());
+					}
+
 				} catch (UserRepositoryException e) {
+
+				} catch (UserDataAdapterException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
