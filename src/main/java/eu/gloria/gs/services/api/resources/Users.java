@@ -17,8 +17,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.sun.jersey.spi.container.ContainerRequest;
-
 import eu.gloria.gs.services.api.data.UserDataAdapter;
 import eu.gloria.gs.services.api.data.dbservices.UserDataAdapterException;
 import eu.gloria.gs.services.api.data.dbservices.UserEntry;
@@ -63,18 +61,9 @@ public class Users extends GResource {
 			GSClientProvider.setCredentials(user, password);
 		}
 
-		String userAgent = request.getHeader(ContainerRequest.USER_AGENT);
-		String remote = request.getHeader(ContainerRequest.HOST);
-		String acceptLanguage = request
-				.getHeader(ContainerRequest.ACCEPT_LANGUAGE);
-
-		if (acceptLanguage != null) {
-			String[] languages = acceptLanguage.split(";");
-
-			if (languages.length > 0) {
-				acceptLanguage = languages[0];
-			}
-		}
+		String userAgent = (String) request.getAttribute("agent");
+		String remote = (String) request.getAttribute("remote");
+		String language = (String) request.getAttribute("language");
 
 		try {
 
@@ -95,7 +84,7 @@ public class Users extends GResource {
 			}
 
 			String token = userAdapter.createToken(user, password,
-					acceptLanguage, userAgent, remote);
+					language, userAgent, remote);
 			return Response.ok(JSONConverter.toJSON(token)).build();
 		} catch (UserDataAdapterException e) {
 			return Response.serverError().entity(e.getMessage()).build();

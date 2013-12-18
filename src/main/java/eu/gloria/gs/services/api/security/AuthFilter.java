@@ -67,25 +67,21 @@ public class AuthFilter implements ContainerRequestFilter {
 			throw new WebApplicationException(Status.OK);
 		}
 
-		// We do allow wadl to be retrieve
-		/*
-		 * if (method.equals("GET") && (path.equals("application.wadl") || path
-		 * .equals("application.wadl/xsd0.xsd"))) { return containerRequest; }
-		 */
-
 		// Get the authentification passed in HTTP headers parameters
 		String auth = containerRequest.getHeaderValue("authorization");
-
-		// If the user does not have the right (does not provide any HTTP Basic
-		// Auth)
-		/*
-		 * if (auth == null) { //throw new
-		 * WebApplicationException(Status.UNAUTHORIZED); }
-		 */
 
 		GSClientProvider.setCredentials("dummy", "neh");
 
 		if (auth != null) {
+
+			String userAgent = sr.getHeader(ContainerRequest.USER_AGENT);
+			String remote = sr.getRemoteAddr();
+			String language = sr.getLocale().getLanguage();
+
+			if (userAgent == null) {
+				userAgent = "";
+			}
+
 			// lap : loginAndPassword
 			String[] lap = BasicAuth.decode(auth);
 
@@ -140,18 +136,11 @@ public class AuthFilter implements ContainerRequestFilter {
 						}
 					}
 
-					String userAgent = containerRequest
-							.getHeaderValue(ContainerRequest.USER_AGENT);
-					String remote = containerRequest
-							.getHeaderValue(ContainerRequest.HOST);
-					String acceptLanguage = containerRequest
-							.getHeaderValue(ContainerRequest.ACCEPT_LANGUAGE);
-
-					if (acceptLanguage != null) {
-						String[] languages = acceptLanguage.split(";");
+					if (language != null) {
+						String[] languages = language.split(";");
 
 						if (languages.length > 0) {
-							acceptLanguage = languages[0];
+							language = languages[0];
 						}
 					}
 
@@ -174,7 +163,7 @@ public class AuthFilter implements ContainerRequestFilter {
 
 					if (newToken) {
 						String token = userAdapter.createToken(name,
-								actualPassword, acceptLanguage, userAgent,
+								actualPassword, language, userAgent,
 								remote);
 
 						userAdapter.activateToken(token);
@@ -184,6 +173,8 @@ public class AuthFilter implements ContainerRequestFilter {
 						userAdapter.updateLastDate(actives.get(0).getToken());
 					}
 
+					sr.setAttribute("agent", userAgent);
+
 				} catch (UserRepositoryException e) {
 
 				} catch (UserDataAdapterException e) {
@@ -191,6 +182,10 @@ public class AuthFilter implements ContainerRequestFilter {
 					e.printStackTrace();
 				}
 			}
+
+			sr.setAttribute("agent", userAgent);
+			sr.setAttribute("remote", remote);
+			sr.setAttribute("language", language);
 
 			sr.setAttribute("user", name);
 			sr.setAttribute("password", actualPassword);
