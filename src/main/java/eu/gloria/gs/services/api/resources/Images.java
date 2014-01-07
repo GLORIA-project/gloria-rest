@@ -40,15 +40,16 @@ public class Images extends GResource {
 	@Context
 	HttpServletRequest request;
 
-	private static ImageRepositoryInterface images = GSClientProvider.getImageRepositoryClient();
+	private static ImageRepositoryInterface images = GSClientProvider
+			.getImageRepositoryClient();
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/list")
 	public Response listImages() {
-		
+
 		this.setupRegularAuthorization(request);
-		
+
 		try {
 			Calendar calendar = Calendar.getInstance();
 			calendar.setTime(new Date());
@@ -81,7 +82,7 @@ public class Images extends GResource {
 			if (imgList == null) {
 				imgList = new ArrayList<ImageInformation>();
 			}
-			
+
 			return Response.ok(imgList).build();
 
 		} catch (ImageRepositoryException e) {
@@ -89,7 +90,7 @@ public class Images extends GResource {
 					.entity(e.getMessage()).build();
 		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/list/object/{object}")
@@ -104,7 +105,7 @@ public class Images extends GResource {
 			if (imgList == null) {
 				imgList = new ArrayList<Integer>();
 			}
-			
+
 			return Response.ok(imgList).build();
 
 		} catch (ImageRepositoryException e) {
@@ -192,4 +193,25 @@ public class Images extends GResource {
 		return Response.status(Status.BAD_REQUEST).build();
 	}
 
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/random/{count}")
+	public Response getImageInformation(@PathParam("count") int count) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+
+			List<ImageInformation> imageInfos = images
+					.getRandomImagesInformation(count);
+
+			return Response.ok(imageInfos).build();
+
+		} catch (ImageRepositoryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return Response.status(Status.BAD_REQUEST).build();
+	}
 }

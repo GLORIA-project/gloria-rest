@@ -158,7 +158,8 @@ public class Experiments extends GResource {
 		} catch (ExperimentException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoReservationsAvailableException e) {
-			return this.processError(Status.NOT_FOUND, e);
+			//return this.processError(Status.NOT_FOUND, e);
+			return this.processSuccess(new Object[0]);
 		}
 	}
 
@@ -323,6 +324,26 @@ public class Experiments extends GResource {
 				| ExperimentReservationArgumentException
 				| MaxReservationTimeException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
+		}
+	}
+
+	@GET
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/online/cancel")
+	public Response cancelReservation(@QueryParam("rid") int rid) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+			experiments.cancelExperimentReservation(rid);
+
+			return this.processSuccess();
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchReservationException e) {
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 

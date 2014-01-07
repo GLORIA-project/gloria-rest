@@ -104,7 +104,7 @@ public class AuthFilter implements ContainerRequestFilter {
 			if (entry != null && entry.getActive() > 0) {
 
 				if (new Date().getTime()
-						- entry.getTokenCreationDate().getTime() < 1800000) {
+						- entry.getTokenUpdateDate().getTime() < 1800000) {
 					name = entry.getName();
 					actualPassword = entry.getPassword();
 					try {
