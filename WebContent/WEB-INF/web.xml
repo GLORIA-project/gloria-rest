@@ -40,6 +40,36 @@
 		<servlet-name>jersey-servlet</servlet-name>
 		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
+	
+	<servlet>
+		<servlet-name>mail-servlet</servlet-name>
+		<servlet-class>eu.gloria.gs.services.api.mail.MailServlet</servlet-class>
+		<init-param>
+			<param-name>userAdapter</param-name>
+			<param-value>userDataAdapter</param-value>
+		</init-param>
+		<init-param>
+			<param-name>username</param-name>
+			<param-value>adminUsername</param-value>
+		</init-param>
+		<init-param>
+			<param-name>password</param-name>
+			<param-value>adminPassword</param-value>
+		</init-param>
+		<init-param>
+			<param-name>redirectUrl</param-name>
+			<param-value>redirectUrl</param-value>
+		</init-param>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>mail-servlet</servlet-name>
+		<url-pattern>/mail</url-pattern>
+	</servlet-mapping>
+	
+	<listener>
+		<listener-class>eu.gloria.gs.services.api.mail.VerificationTask</listener-class>
+	</listener>
 
 
 	<!-- <security-constraint> <web-resource-collection> <web-resource-name>GLORIAAPI</web-resource-name> 

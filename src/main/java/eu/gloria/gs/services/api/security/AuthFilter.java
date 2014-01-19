@@ -89,6 +89,10 @@ public class AuthFilter implements ContainerRequestFilter {
 			if (lap == null || lap.length != 2) {
 				throw new WebApplicationException(Status.UNAUTHORIZED);
 			}
+			
+			if (lap[0].equals("public") && lap[1].equals("public")) {
+				return containerRequest;				
+			}
 
 			UserEntry entry = null;
 			String name = null;

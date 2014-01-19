@@ -68,6 +68,14 @@ public abstract class GResource {
 	public static void setAdminPassword(String adminPassword) {
 		GResource.adminPassword = adminPassword;
 	}
+	
+	protected String getUsername(HttpServletRequest request) {
+		return (String) request.getAttribute("user");
+	}
+	
+	protected String getPassword(HttpServletRequest request) {
+		return (String) request.getAttribute("password");
+	}
 
 	protected void setupRegularAuthorization(HttpServletRequest request) {
 		if (request.getAttribute("user") != null) {

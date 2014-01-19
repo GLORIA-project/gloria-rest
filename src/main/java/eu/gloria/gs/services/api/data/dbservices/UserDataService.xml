@@ -15,10 +15,11 @@
 		`tokenUpdateDate` datetime DEFAULT NULL,
 		`locale` varchar(10) DEFAULT
 		NULL,
-		`remote` varchar(200) DEFAULT NULL,		
+		`remote` varchar(200) DEFAULT NULL,
 		`agent` text DEFAULT NULL,
 		`active` int(11) NOT NULL DEFAULT '0',
-		PRIMARY KEY (`name`,`token`)
+		PRIMARY KEY
+		(`name`,`token`)
 		)
 		ENGINE=InnoDB DEFAULT CHARSET=utf8
 	</update>
@@ -49,7 +50,8 @@
 		`api_user`
 		(name,
 		password,
-		token, tokenCreationDate, tokenUpdateDate, locale, remote, agent)
+		token, tokenCreationDate, tokenUpdateDate, locale, remote,
+		agent)
 		VALUE ( #{name},
 		#{password},
 		#{token}, #{tokenCreationDate},
@@ -71,7 +73,8 @@
 	<update id="setOthersInactive">
 		UPDATE `api_user`
 		SET active=0
-		WHERE name=#{name_} AND token!=#{token_}
+		WHERE name=#{name_} AND
+		token!=#{token_}
 	</update>
 
 	<delete id="remove">
