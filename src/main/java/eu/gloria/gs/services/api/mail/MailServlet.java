@@ -9,6 +9,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import eu.gloria.gs.services.api.data.UserDataAdapter;
 import eu.gloria.gs.services.api.data.dbservices.UserDataAdapterException;
 import eu.gloria.gs.services.api.data.dbservices.UserVerificationEntry;
+import eu.gloria.gs.services.api.security.SHA1;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.repository.user.UserRepositoryException;
 import eu.gloria.gs.services.repository.user.UserRepositoryInterface;
@@ -58,7 +59,9 @@ public class MailServlet extends HttpServlet {
 						.getUserRepositoryClient();
 				userRepository.createUser(entry.getEmail(), entry.getAlias());
 				userRepository.activateUser(entry.getEmail(),
-						entry.getPassword());
+						SHA1.encode(entry.getPassword()));
+				
+				userAdapter.deactivateOtherTokens(entry.getEmail(), "");
 
 				userAdapter.setVerificationChecked(entry.getAlias());
 			}
@@ -111,11 +114,13 @@ public class MailServlet extends HttpServlet {
 
 				if (userInfo.getPassword() == null) {
 					userRepository.activateUser(entry.getEmail(),
-							entry.getNewPassword());
+							SHA1.encode(entry.getNewPassword()));
 				} else {
 					userRepository.changePassword(entry.getEmail(),
-							entry.getNewPassword());
+							SHA1.encode(entry.getNewPassword()));
 				}
+				
+				userAdapter.deactivateOtherTokens(entry.getEmail(), "");
 
 				userAdapter.clearReset(alias);
 

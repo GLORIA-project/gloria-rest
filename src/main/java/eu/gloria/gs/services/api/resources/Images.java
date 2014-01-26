@@ -195,7 +195,7 @@ public class Images extends GResource {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/random/{count}")
+	@Path("/random/all/{count}")
 	public Response getImageInformation(@PathParam("count") int count) {
 
 		this.setupRegularAuthorization(request);
@@ -204,6 +204,28 @@ public class Images extends GResource {
 
 			List<ImageInformation> imageInfos = images
 					.getRandomImagesInformation(count);
+
+			return Response.ok(imageInfos).build();
+
+		} catch (ImageRepositoryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return Response.status(Status.BAD_REQUEST).build();
+	}
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/random/mine/{count}")
+	public Response getUserImageInformation(@PathParam("count") int count) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+
+			List<ImageInformation> imageInfos = images
+					.getRandomUserImagesInformation(this.getUsername(request), count);
 
 			return Response.ok(imageInfos).build();
 
