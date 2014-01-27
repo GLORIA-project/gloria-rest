@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -68,11 +69,11 @@ public abstract class GResource {
 	public static void setAdminPassword(String adminPassword) {
 		GResource.adminPassword = adminPassword;
 	}
-	
+
 	protected String getUsername(HttpServletRequest request) {
 		return (String) request.getAttribute("user");
 	}
-	
+
 	protected String getPassword(HttpServletRequest request) {
 		return (String) request.getAttribute("password");
 	}
@@ -97,7 +98,8 @@ public abstract class GResource {
 		errorData.put("type", errorName);
 		errorData.put("description", message);
 
-		return Response.status(status).entity(errorData).build();
+		return Response.status(status).entity(errorData)
+				.type(MediaType.APPLICATION_JSON).build();
 	}
 
 	protected Response processError(Status status, ActionException e) {
@@ -105,10 +107,12 @@ public abstract class GResource {
 		LinkedHashMap<String, Object> errorData = new LinkedHashMap<>();
 		errorData.put("type", e.getClass().getSimpleName());
 		String messageStr = e.getMessage();
-		Object message = JSONConverter.fromJSON(messageStr, Object.class, null);
+		Object message = JSONConverter.fromJSON(messageStr,
+				LinkedHashMap.class, null);
 		errorData.put("description", message);
 
-		return Response.status(status).entity(errorData).build();
+		return Response.status(status).entity(errorData)
+				.type(MediaType.APPLICATION_JSON).build();
 	}
 
 	protected Response processSuccess(Object data) {
@@ -116,13 +120,13 @@ public abstract class GResource {
 		if (data instanceof String) {
 			data = JSONConverter.toJSON(data);
 		}
-		return Response.ok(data).build();
+		return Response.ok(data).type(MediaType.APPLICATION_JSON).build();
 	}
 
 	protected Response processSuccess() {
 		LinkedHashMap<String, Object> dummy = new LinkedHashMap<>();
 
-		return Response.ok(dummy).build();
+		return Response.ok(dummy).type(MediaType.APPLICATION_JSON).build();
 	}
 
 }
