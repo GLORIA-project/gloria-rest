@@ -5,6 +5,7 @@
  */
 package eu.gloria.gs.services.api.resources;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -79,8 +80,13 @@ public class Teleoperation extends GResource {
 
 		try {
 			double pressure = weathers.getPressure(rt, barometer);
+			boolean alarm = weathers.isPressureOnAlarm(rt, barometer);
 
-			return this.processSuccess(pressure);
+			LinkedHashMap<String, Object> response = new LinkedHashMap<String, Object>();
+			response.put("value", pressure);
+			response.put("alarm", alarm);
+
+			return this.processSuccess(response);
 		} catch (WeatherTeleoperationException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
@@ -98,8 +104,13 @@ public class Teleoperation extends GResource {
 
 		try {
 			double windSpeed = weathers.getWindSpeed(rt, wind);
+			boolean alarm = weathers.isWindOnAlarm(rt, wind);
 
-			return this.processSuccess(windSpeed);
+			LinkedHashMap<String, Object> response = new LinkedHashMap<String, Object>();
+			response.put("value", windSpeed);
+			response.put("alarm", alarm);
+
+			return this.processSuccess(response);
 		} catch (WeatherTeleoperationException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
@@ -117,8 +128,13 @@ public class Teleoperation extends GResource {
 
 		try {
 			double humidity = weathers.getRelativeHumidity(rt, rh);
+			boolean alarm = weathers.isRHOnAlarm(rt, rh);
 
-			return this.processSuccess(humidity);
+			LinkedHashMap<String, Object> response = new LinkedHashMap<String, Object>();
+			response.put("value", humidity);
+			response.put("alarm", alarm);
+
+			return this.processSuccess(response);
 		} catch (WeatherTeleoperationException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {
@@ -246,7 +262,7 @@ public class Teleoperation extends GResource {
 
 			try {
 				ccds.setExposureTime(rt, ccd, exposure);
-				
+
 				return this.processSuccess();
 			} catch (CCDTeleoperationException e) {
 				return this.processError(Status.NOT_ACCEPTABLE, e);
