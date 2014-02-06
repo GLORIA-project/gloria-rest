@@ -219,6 +219,9 @@ public class Users extends GResource {
 				String encodedPassword = SHA1.encode(upInfo.getPassword());
 				users.changePassword(this.getUsername(request), encodedPassword);
 
+				userAdapter
+						.deactivateOtherTokens(this.getUsername(request), "");
+
 				return this.processSuccess();
 			} else {
 				return this.processError(Status.NOT_ACCEPTABLE, "input error",
@@ -240,9 +243,9 @@ public class Users extends GResource {
 
 		String alias = resetInfo.getAlias();
 		String email = resetInfo.getEmail();
-		
+
 		boolean validEmail = this.validateEmail(email);
-		
+
 		if (!validEmail) {
 			return this.processError(Status.NOT_ACCEPTABLE, "validation",
 					"email");
