@@ -213,8 +213,6 @@ public class Users extends GResource {
 		try {
 
 			boolean validPassword = this.validatePassword(upInfo.getPassword());
-			// boolean validAlias = this.validateAlias(upInfo.getAlias());
-
 			if (validPassword) {
 				String encodedPassword = SHA1.encode(upInfo.getPassword());
 				users.changePassword(this.getUsername(request), encodedPassword);
@@ -224,8 +222,8 @@ public class Users extends GResource {
 
 				return this.processSuccess();
 			} else {
-				return this.processError(Status.NOT_ACCEPTABLE, "input error",
-						"the password is not valid");
+				return this.processError(Status.NOT_ACCEPTABLE, "validation",
+						"password");
 			}
 
 		} catch (Exception e) {
