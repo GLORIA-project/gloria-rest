@@ -3,6 +3,9 @@
 	<name>GLORIAAPI</name>
 	<comment></comment>
 	<projects>
+		<project>ServiceTools</project>
+		<project>GLORIAInterfaces</project>
+		<project>SClientTools</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

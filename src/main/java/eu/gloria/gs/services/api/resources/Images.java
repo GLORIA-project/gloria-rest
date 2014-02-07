@@ -59,11 +59,10 @@ public class Images extends GResource {
 			List<Integer> ids = images.getAllImageIdentifiersByDate(
 					calendar.getTime(), new Date());
 
-			return Response.ok(ids).build();
+			return this.processSuccess(ids);
 
 		} catch (ImageRepositoryException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -83,11 +82,10 @@ public class Images extends GResource {
 				imgList = new ArrayList<ImageInformation>();
 			}
 
-			return Response.ok(imgList).build();
+			return this.processSuccess(imgList);
 
 		} catch (ImageRepositoryException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -106,11 +104,10 @@ public class Images extends GResource {
 				imgList = new ArrayList<Integer>();
 			}
 
-			return Response.ok(imgList).build();
+			return this.processSuccess(imgList);
 
 		} catch (ImageRepositoryException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -162,12 +159,11 @@ public class Images extends GResource {
 					imageInfos.add(imageInfo);
 				}
 
-				return Response.ok(imageInfos).build();
+				return this.processSuccess(imageInfos);
 			}
 
 		} catch (ImageRepositoryException e) {
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -183,14 +179,11 @@ public class Images extends GResource {
 			ImageInformation imageInfo = images.getImageInformation(Integer
 					.valueOf(id));
 
-			return Response.ok(imageInfo).build();
+			return this.processSuccess(imageInfo);
 
 		} catch (ImageRepositoryException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return this.processError(Status.NOT_FOUND, e);
 		}
-
-		return Response.status(Status.BAD_REQUEST).build();
 	}
 
 	@GET
@@ -205,16 +198,13 @@ public class Images extends GResource {
 			List<ImageInformation> imageInfos = images
 					.getRandomImagesInformation(count);
 
-			return Response.ok(imageInfos).build();
+			return this.processSuccess(imageInfos);
 
 		} catch (ImageRepositoryException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return this.processError(Status.NOT_FOUND, e);
 		}
-
-		return Response.status(Status.BAD_REQUEST).build();
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/random/mine/{count}")
@@ -225,15 +215,13 @@ public class Images extends GResource {
 		try {
 
 			List<ImageInformation> imageInfos = images
-					.getRandomUserImagesInformation(this.getUsername(request), count);
+					.getRandomUserImagesInformation(this.getUsername(request),
+							count);
 
-			return Response.ok(imageInfos).build();
+			return this.processSuccess(imageInfos);
 
 		} catch (ImageRepositoryException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return this.processError(Status.NOT_FOUND, e);
 		}
-
-		return Response.status(Status.BAD_REQUEST).build();
 	}
 }
