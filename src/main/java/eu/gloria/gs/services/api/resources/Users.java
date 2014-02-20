@@ -203,34 +203,32 @@ public class Users extends GResource {
 		}
 	}
 
-	@POST
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/update")
-	public Response updateUserInfo(RegisterUserRequest upInfo) {
-
-		this.setupRegularAuthorization(request);
-
-		try {
-
-			boolean validPassword = this.validatePassword(upInfo.getPassword());
-			if (validPassword) {
-				String encodedPassword = SHA1.encode(upInfo.getPassword());
-				users.changePassword(this.getUsername(request), encodedPassword);
-
-				userAdapter
-						.deactivateOtherTokens(this.getUsername(request), "");
-
-				return this.processSuccess();
-			} else {
-				return this.processError(Status.NOT_ACCEPTABLE, "validation",
-						"password");
-			}
-
-		} catch (Exception e) {
-			return this.processError(Status.INTERNAL_SERVER_ERROR,
-					"update account", e.getMessage());
-		}
-	}
+	/*
+	 * @POST
+	 * 
+	 * @Produces(MediaType.APPLICATION_JSON)
+	 * 
+	 * @Path("/update") public Response updateUserInfo(RegisterUserRequest
+	 * upInfo) {
+	 * 
+	 * this.setupPublicAuthorization();
+	 * 
+	 * try {
+	 * 
+	 * boolean validPassword = this.validatePassword(upInfo.getPassword()); if
+	 * (validPassword) { String encodedPassword =
+	 * SHA1.encode(upInfo.getPassword());
+	 * users.changePassword(this.getUsername(request), encodedPassword);
+	 * 
+	 * userAdapter .deactivateOtherTokens(this.getUsername(request), "");
+	 * 
+	 * return this.processSuccess(); } else { return
+	 * this.processError(Status.NOT_ACCEPTABLE, "validation", "password"); }
+	 * 
+	 * } catch (Exception e) { return
+	 * this.processError(Status.INTERNAL_SERVER_ERROR, "update account",
+	 * e.getMessage()); } }
+	 */
 
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
@@ -292,6 +290,86 @@ public class Users extends GResource {
 		} catch (Exception e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR,
 					"reset account", e.getMessage());
+		}
+	}
+
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/update")
+	public Response changePassword(UpdateUserRequest updateInfo) {
+
+		this.setupPublicAuthorization();
+
+		String alias = updateInfo.getAlias();
+		String email = this.getUsername(request);
+		String newPassword = updateInfo.getPassword();
+		String ocupation = updateInfo.getOcupation();
+
+		if (ocupation != null) {
+
+			try {
+				users.setUserOcupation(email, ocupation);
+
+				return this.processSuccess();
+			} catch (UserRepositoryException e) {
+				return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+			}
+
+		} else if (newPassword != null) {
+			boolean validPassword = this.validatePassword(newPassword);
+
+			if (!validPassword) {
+				return this.processError(Status.NOT_ACCEPTABLE, "validation",
+						"password");
+			}
+
+			LogAction log = new LogAction();
+			log.put("alias", alias);
+			log.put("email", email);
+
+			try {
+				if (!users.containsUser(email)) {
+					log.put("reason", "user does not exist");
+					throw new UserDataAdapterException(log);
+				}
+
+				UserInformation userInfo = users.getUserInformation(email);
+
+				if (email == null
+						&& (alias == null || userInfo.getAlias() == null || userInfo
+								.getAlias().equals(""))) {
+					alias = userInfo.getName();
+				}
+
+				if (userInfo.getAlias() != null) {
+					alias = userInfo.getAlias();
+				}
+
+				if (!userAdapter.containsVerification(alias, email)) {
+					userAdapter.createEncodedVerification(alias, email,
+							newPassword);
+				}
+
+			} catch (UserDataAdapterException e) {
+				return this.processError(Status.NOT_ACCEPTABLE, e);
+			} catch (UserRepositoryException e) {
+				return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+			}
+
+			try {
+				userAdapter.requestChangePassword(alias, email, newPassword);
+				return this.processSuccess();
+
+			} catch (UserDataAdapterException e) {
+				e.getAction().put("on", "change password");
+				return this.processError(Status.NOT_ACCEPTABLE, e);
+			} catch (Exception e) {
+				return this.processError(Status.INTERNAL_SERVER_ERROR,
+						"change password", e.getMessage());
+			}
+		} else {
+			return this.processError(Status.NOT_ACCEPTABLE, "error",
+					"insufficient data");
 		}
 	}
 }

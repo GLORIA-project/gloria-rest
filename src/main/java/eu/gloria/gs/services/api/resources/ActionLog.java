@@ -121,7 +121,31 @@ public class ActionLog extends GResource {
 			return Response.serverError().build();
 		}
 	}
-	
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/infos/yesterday")
+	public Response getYesterdaysInfoLog() {
+
+		this.setupRegularAuthorization(request);
+
+		Date yesterday = new Date();
+		Calendar calendar = Calendar.getInstance();
+		int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
+		calendar.set(Calendar.DAY_OF_YEAR, dayOfYear-1);
+
+		yesterday = calendar.getTime();
+
+		ObjectResponse response;
+		try {
+			response = log.getInfoLogsByDate(beginDateOf(yesterday),
+					endDateOf(yesterday));
+			return Response.ok(response.content).build();
+		} catch (ActionLogException e) {
+			return Response.serverError().build();
+		}
+	}
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/infos/{year}/{month}/{day}")
@@ -139,7 +163,8 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log.getInfoLogsByDate(beginDateOf(date), endDateOf(date));
+			response = log
+					.getInfoLogsByDate(beginDateOf(date), endDateOf(date));
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -167,6 +192,30 @@ public class ActionLog extends GResource {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/errors/yesterday")
+	public Response getYesterdaysErrorLog() {
+
+		this.setupRegularAuthorization(request);
+
+		Date yesterday = new Date();
+		Calendar calendar = Calendar.getInstance();
+		int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
+		calendar.set(Calendar.DAY_OF_YEAR, dayOfYear-1);
+
+		yesterday = calendar.getTime();
+
+		ObjectResponse response;
+		try {
+			response = log.getErrorLogsByDate(beginDateOf(yesterday),
+					endDateOf(yesterday));
+			return Response.ok(response.content).build();
+		} catch (ActionLogException e) {
+			return Response.serverError().build();
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/errors/{year}/{month}/{day}")
 	public Response getDateErrorLog(@PathParam("year") int year,
 			@PathParam("month") int month, @PathParam("day") int day) {
@@ -182,13 +231,14 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log.getErrorLogsByDate(beginDateOf(date), endDateOf(date));
+			response = log.getErrorLogsByDate(beginDateOf(date),
+					endDateOf(date));
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
 		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/context/{rid}")
@@ -196,12 +246,9 @@ public class ActionLog extends GResource {
 
 		this.setupRegularAuthorization(request);
 
-		Date today = new Date();
-
 		ObjectResponse response;
 		try {
-			response = log.getAllRidLogsByDate(rid, beginDateOf(today),
-					endDateOf(today));
+			response = log.getAllRidLogs(rid);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -215,12 +262,9 @@ public class ActionLog extends GResource {
 
 		this.setupRegularAuthorization(request);
 
-		Date today = new Date();
-
 		ObjectResponse response;
 		try {
-			response = log.getInfoRidLogsByDate(rid, beginDateOf(today),
-					endDateOf(today));
+			response = log.getInfoRidLogs(rid);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();

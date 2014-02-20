@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xmlns="http://java.sun.com/xml/ns/javaee"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 	id="GLORIAPI" version="2.5">
 	<display-name>GLORIAPI</display-name>
@@ -8,27 +8,29 @@
 		<param-name>contextConfigLocation</param-name>
 		<param-value>/WEB-INF/APIContext.xml</param-value>
 	</context-param>
-
 	<listener>
-		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+		<listener-class>org.springframework.web.context.ContextLoaderListener
+		</listener-class>
 	</listener>
-
 	<servlet>
 		<servlet-name>jersey-servlet</servlet-name>
-		<servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+		<servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer
+		</servlet-class>
 		<init-param>
 			<param-name>com.sun.jersey.config.property.packages</param-name>
 			<param-value>eu.gloria.gs.services.api.resources</param-value>
 		</init-param>
 		<init-param>
-			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
-			<param-value>eu.gloria.gs.services.api.security.AuthFilter</param-value>
-			<!-- com.sun.jersey.api.container.filter.LoggingFilter; -->
+			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters
+			</param-name>
+			<param-value>eu.gloria.gs.services.api.security.AuthFilter
+			</param-value>
 		</init-param>
 		<init-param>
-			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
-			<param-value>eu.gloria.gs.services.api.security.ResponseCorsFilter</param-value>
-			<!-- com.sun.jersey.api.container.filter.LoggingFilter; -->
+			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters
+			</param-name>
+			<param-value>eu.gloria.gs.services.api.security.ResponseCorsFilter
+			</param-value>
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
@@ -40,10 +42,10 @@
 		<servlet-name>jersey-servlet</servlet-name>
 		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
-	
 	<servlet>
 		<servlet-name>mail-servlet</servlet-name>
-		<servlet-class>eu.gloria.gs.services.api.mail.MailServlet</servlet-class>
+		<servlet-class>eu.gloria.gs.services.api.mail.MailServlet
+		</servlet-class>
 		<init-param>
 			<param-name>userAdapter</param-name>
 			<param-value>userDataAdapter</param-value>
@@ -61,20 +63,12 @@
 			<param-value>redirectUrl</param-value>
 		</init-param>
 	</servlet>
-	
 	<servlet-mapping>
 		<servlet-name>mail-servlet</servlet-name>
 		<url-pattern>/mail</url-pattern>
 	</servlet-mapping>
-	
 	<listener>
-		<listener-class>eu.gloria.gs.services.api.mail.VerificationTask</listener-class>
+		<listener-class>eu.gloria.gs.services.api.mail.VerificationTask
+		</listener-class>
 	</listener>
-
-
-	<!-- <security-constraint> <web-resource-collection> <web-resource-name>GLORIAAPI</web-resource-name> 
-		<url-pattern>/*</url-pattern> </web-resource-collection> <user-data-constraint> 
-		<transport-guarantee>CONFIDENTIAL</transport-guarantee> </user-data-constraint> 
-		</security-constraint> -->
-
 </web-app>

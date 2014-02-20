@@ -13,9 +13,36 @@ public class UserVerificationEntry {
 	private String email;
 	private String status;
 	private Integer reset;
+	private Integer chpass;
 	private String newPassword;
 	private Date resetRequestDate;
-	private Date resetDoneDate;	
+	private Date resetDoneDate;
+	private Date chpassRequestDate;
+	private Date chpassDoneDate;
+
+	public Integer getChpass() {
+		return chpass;
+	}
+
+	public void setChpass(Integer chpass) {
+		this.chpass = chpass;
+	}
+
+	public Date getChPassRequestDate() {
+		return chpassRequestDate;
+	}
+
+	public void setChPassRequestDate(Date chPassRequestDate) {
+		this.chpassRequestDate = chPassRequestDate;
+	}
+
+	public Date getChPassDoneDate() {
+		return chpassDoneDate;
+	}
+
+	public void setChPassDoneDate(Date chPassDoneDate) {
+		this.chpassDoneDate = chPassDoneDate;
+	}
 
 	public Date getResetRequestDate() {
 		return resetRequestDate;

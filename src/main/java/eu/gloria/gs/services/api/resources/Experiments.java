@@ -7,13 +7,17 @@ package eu.gloria.gs.services.api.resources;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -28,7 +32,6 @@ import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.experiment.ExperimentException;
 import eu.gloria.gs.services.experiment.ExperimentInterface;
 import eu.gloria.gs.services.experiment.base.data.ExperimentInformation;
-import eu.gloria.gs.services.experiment.base.data.FeatureInformation;
 import eu.gloria.gs.services.experiment.base.data.ExperimentRuntimeInformation;
 import eu.gloria.gs.services.experiment.base.data.NoSuchExperimentException;
 import eu.gloria.gs.services.experiment.base.data.OperationInformation;
@@ -37,22 +40,21 @@ import eu.gloria.gs.services.experiment.base.data.ReservationInformation;
 import eu.gloria.gs.services.experiment.base.data.ResultInformation;
 import eu.gloria.gs.services.experiment.base.data.TimeSlot;
 import eu.gloria.gs.services.experiment.base.models.DuplicateExperimentException;
-import eu.gloria.gs.services.experiment.base.models.ExperimentFeature;
 import eu.gloria.gs.services.experiment.base.models.InvalidUserContextException;
 import eu.gloria.gs.services.experiment.base.operations.ExperimentOperation;
 import eu.gloria.gs.services.experiment.base.operations.ExperimentOperationException;
 import eu.gloria.gs.services.experiment.base.operations.NoSuchOperationException;
-import eu.gloria.gs.services.experiment.base.operations.OperationTypeNotAvailableException;
 import eu.gloria.gs.services.experiment.base.parameters.NoSuchParameterException;
 import eu.gloria.gs.services.experiment.base.parameters.ExperimentParameter;
 import eu.gloria.gs.services.experiment.base.parameters.ExperimentParameterException;
 import eu.gloria.gs.services.experiment.base.parameters.ParameterType;
-import eu.gloria.gs.services.experiment.base.parameters.ParameterTypeNotAvailableException;
 import eu.gloria.gs.services.experiment.base.reservation.ExperimentNotInstantiatedException;
 import eu.gloria.gs.services.experiment.base.reservation.ExperimentReservationArgumentException;
 import eu.gloria.gs.services.experiment.base.reservation.MaxReservationTimeException;
 import eu.gloria.gs.services.experiment.base.reservation.NoReservationsAvailableException;
 import eu.gloria.gs.services.experiment.base.reservation.NoSuchReservationException;
+import eu.gloria.gs.services.repository.rt.RTRepositoryException;
+import eu.gloria.gs.services.repository.rt.RTRepositoryInterface;
 import eu.gloria.gs.services.utils.ObjectResponse;
 
 /**
@@ -69,6 +71,9 @@ public class Experiments extends GResource {
 
 	private static ExperimentInterface experiments = GSClientProvider
 			.getOnlineExperimentClient();
+
+	private static RTRepositoryInterface rtRepository = GSClientProvider
+			.getRTRepositoryClient();
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -158,7 +163,7 @@ public class Experiments extends GResource {
 		} catch (ExperimentException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoReservationsAvailableException e) {
-			//return this.processError(Status.NOT_FOUND, e);
+			// return this.processError(Status.NOT_FOUND, e);
 			return this.processSuccess(new Object[0]);
 		}
 	}
@@ -313,6 +318,18 @@ public class Experiments extends GResource {
 			timeSlot.setBegin(data.getBegin());
 			timeSlot.setEnd(data.getEnd());
 
+			List<String> telescopes = data.getTelescopes();
+			for (String rt : telescopes) {
+				try {
+					if (!rtRepository.containsRT(rt)) {
+						return this.processError(Status.NOT_ACCEPTABLE,
+								"wrong telescopes", rt + " is not a telescope");
+					}
+				} catch (RTRepositoryException e) {
+					return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+				}
+			}
+
 			experiments.reserveExperiment(data.getExperiment(),
 					data.getTelescopes(), timeSlot);
 
@@ -330,8 +347,8 @@ public class Experiments extends GResource {
 	@GET
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/online/cancel")
-	public Response cancelReservation(@QueryParam("rid") int rid) {
+	@Path("/context/{rid}/cancel")
+	public Response cancelReservation(@PathParam("rid") int rid) {
 
 		this.setupRegularAuthorization(request);
 
@@ -344,6 +361,32 @@ public class Experiments extends GResource {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchReservationException e) {
 			return this.processError(Status.NOT_FOUND, e);
+		} catch (InvalidUserContextException e) {
+			return this.processError(Status.FORBIDDEN, e);
+		}
+	}
+
+	@GET
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/context/{rid}/reset")
+	public Response resetContext(@PathParam("rid") int rid) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+			experiments.resetExperimentContext(rid);
+
+			return this.processSuccess();
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchReservationException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		} catch (InvalidUserContextException e) {
+			return this.processError(Status.FORBIDDEN, e);
+		} catch (ExperimentNotInstantiatedException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -592,9 +635,167 @@ public class Experiments extends GResource {
 		} catch (ExperimentNotInstantiatedException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (ExperimentParameterException e) {
-			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+			return this.processError(Status.BAD_REQUEST, e);
 		} catch (InvalidUserContextException e) {
 			return this.processError(Status.FORBIDDEN, e);
+		}
+	}
+
+	private String[] generateStringArgs(Object args) {
+		String[] argStr = new String[1];
+
+		argStr[0] = JSONConverter.toJSON(args);
+
+		return argStr;
+	}
+
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{experiment}")
+	public Response registerExperiment(
+			@PathParam("experiment") String experiment,
+			RegisterExperimentRequest data) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+
+			if (data.getType() != null) {
+				if (data.getType().equals("offline")) {
+					experiments.createOfflineExperiment(experiment);
+				} else if (data.getType().equals("online")) {
+					experiments.createOnlineExperiment(experiment);
+				} else {
+					return this.processError(Status.BAD_REQUEST,
+							"experiment type",
+							"an experiment can only be online or offline");
+				}
+			}
+
+			for (String name : data.getParameters().keySet()) {
+
+				ParameterInformation paramInfo = new ParameterInformation();
+				paramInfo.setName(name);
+				paramInfo.setType((String) data.getParameters().get(name)
+						.getType());
+
+				paramInfo.setArguments(this.generateStringArgs(data
+						.getParameters().get(name).getInit()));
+
+				experiments.addExperimentParameter(experiment, paramInfo);
+
+			}
+
+			for (String name : data.getOperations().keySet()) {
+
+				OperationInformation opInfo = new OperationInformation();
+				opInfo.setName(name);
+				opInfo.setType(data.getOperations().get(name).getType());
+
+				opInfo.setArguments(data.getOperations().get(name)
+						.getArguments());
+
+				experiments.addExperimentOperation(experiment, opInfo);
+
+			}
+
+			return this.processSuccess();
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchExperimentException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		} catch (NoSuchParameterException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		} catch (DuplicateExperimentException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
+		}
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{experiment}")
+	public Response getExperiment(@PathParam("experiment") String experiment) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+
+			LinkedHashMap<String, Object> exp = new LinkedHashMap<String, Object>();
+			LinkedHashMap<String, Object> operations = new LinkedHashMap<String, Object>();
+			LinkedHashMap<String, Object> parameters = new LinkedHashMap<String, Object>();
+
+			ExperimentInformation expInfo = experiments
+					.getExperimentInformation(experiment);
+
+			exp.put("type", expInfo.getType().name().toLowerCase());
+			exp.put("parameters", parameters);
+			exp.put("operations", operations);
+
+			List<OperationInformation> opInfos = expInfo.getOperations();
+
+			if (opInfos != null) {
+				for (OperationInformation opInfo : opInfos) {
+					LinkedHashMap<String, Object> operation = new LinkedHashMap<String, Object>();
+
+					operation.put("type", opInfo.getType());
+					/*
+					 * operation.put("description", opInfo.getOperation()
+					 * .getDescription());
+					 */
+					operation.put("arguments", opInfo.getArguments());
+					operations.put(opInfo.getName(), operation);
+				}
+			}
+
+			List<ParameterInformation> paramInfos = expInfo.getParameters();
+
+			if (paramInfos != null) {
+				for (ParameterInformation paramInfo : paramInfos) {
+					NewParameterRequest parameter = new NewParameterRequest();
+					parameter.setType(paramInfo.getType());
+
+					Object[] objectArgs = new Object[paramInfo.getArguments().length];
+
+					int i = 0;
+					for (Object arg : paramInfo.getArguments()) {
+						Object objectArg = JSONConverter.fromJSON((String) arg,
+								Object.class, null);
+
+						objectArgs[i] = objectArg;
+					}
+
+					parameter.setInit(objectArgs[0]);
+					parameters.put(paramInfo.getName(), parameter);
+				}
+			}
+
+			return this.processSuccess(exp);
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchExperimentException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		}
+	}
+
+	@HEAD
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{experiment}")
+	public Response emptyExperiment(@PathParam("experiment") String experiment) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+
+			experiments.emptyExperiment(experiment);
+
+			return this.processSuccess();
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchExperimentException e) {
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -608,22 +809,21 @@ public class Experiments extends GResource {
 
 		try {
 
-			List<OperationInformation> operations = experiments
+			List<OperationInformation> opInfos = experiments
 					.getExperimentInformation(experiment).getOperations();
 
-			if (!detailed) {
-				List<String> opNames = new ArrayList<>();
+			LinkedHashMap<String, Object> operations = new LinkedHashMap<String, Object>();
 
-				if (operations != null) {
-					for (OperationInformation opInfo : operations) {
-						opNames.add(opInfo.getName());
-					}
+			if (opInfos != null) {
+				for (OperationInformation opInfo : opInfos) {
+					LinkedHashMap<String, Object> operation = new LinkedHashMap<String, Object>();
+					operation.put("type", opInfo.getType());
+					operation.put("arguments", opInfo.getArguments());
+					operations.put(opInfo.getName(), operation);
 				}
-
-				return Response.ok(opNames).build();
-			} else {
-				return Response.ok(operations).build();
 			}
+
+			return this.processSuccess(operations);
 
 		} catch (ExperimentException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
@@ -635,29 +835,38 @@ public class Experiments extends GResource {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{experiment}/parameters")
-	public Response listParameters(@PathParam("experiment") String experiment,
-			@QueryParam("detailed") boolean detailed) {
+	public Response listParameters(@PathParam("experiment") String experiment) {
 
 		this.setupRegularAuthorization(request);
 
 		try {
 
-			List<ParameterInformation> parameters = experiments
+			List<ParameterInformation> paramInfos = experiments
 					.getExperimentInformation(experiment).getParameters();
 
-			if (!detailed) {
-				List<String> paramNames = new ArrayList<>();
+			LinkedHashMap<String, Object> parameters = new LinkedHashMap<String, Object>();
 
-				if (parameters != null) {
-					for (ParameterInformation paramInfo : parameters) {
-						paramNames.add(paramInfo.getName());
+			if (paramInfos != null) {
+				for (ParameterInformation paramInfo : paramInfos) {
+					NewParameterRequest parameter = new NewParameterRequest();
+					parameter.setType(paramInfo.getType());
+
+					Object[] objectArgs = new Object[paramInfo.getArguments().length];
+
+					int i = 0;
+					for (Object arg : paramInfo.getArguments()) {
+						Object objectArg = JSONConverter.fromJSON((String) arg,
+								Object.class, null);
+
+						objectArgs[i] = objectArg;
 					}
-				}
 
-				return this.processSuccess(paramNames);
-			} else {
-				return this.processSuccess(parameters);
+					parameter.setInit(objectArgs[0]);
+					parameters.put(paramInfo.getName(), parameter);
+				}
 			}
+
+			return this.processSuccess(parameters);
 
 		} catch (ExperimentException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
@@ -690,6 +899,26 @@ public class Experiments extends GResource {
 		}
 	}
 
+	@DELETE
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{experiment}/parameters/{parameter}")
+	public Response deleteParameter(@PathParam("experiment") String experiment,
+			@PathParam("parameter") String parameter) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+			experiments.deleteExperimentParameter(experiment, parameter);
+
+			return this.processSuccess();
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchExperimentException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		}
+	}
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{experiment}/operations/{operation}")
@@ -713,6 +942,26 @@ public class Experiments extends GResource {
 		}
 	}
 
+	@DELETE
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{experiment}/operations/{operation}")
+	public Response deleteOperation(@PathParam("experiment") String experiment,
+			@PathParam("operation") String operation) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+			experiments.deleteExperimentOperation(experiment, operation);
+
+			return this.processSuccess();
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchExperimentException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		}
+	}
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/context/{rid}/execute/{operation}")
@@ -727,7 +976,7 @@ public class Experiments extends GResource {
 
 			return this.processSuccess();
 
-		} catch (ExperimentException | ExperimentOperationException e) {
+		} catch (ExperimentException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchOperationException | NoSuchExperimentException
 				| NoSuchReservationException e) {
@@ -736,13 +985,36 @@ public class Experiments extends GResource {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (InvalidUserContextException e) {
 			return this.processError(Status.FORBIDDEN, e);
+		} catch (ExperimentOperationException e) {
+			return this.processError(Status.BAD_REQUEST, e);
 		}
 	}
 
-	@POST
+	@DELETE
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/{experiment}/parameters/add")
+	@Path("/{experiment}")
+	public Response deleteExperiment(@PathParam("experiment") String experiment) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+
+			experiments.deleteExperiment(experiment);
+
+			return this.processSuccess();
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchExperimentException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		}
+	}
+
+	@PUT
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{experiment}/parameters")
 	public Response addExperimentParameter(
 			@PathParam("experiment") String experiment,
 			ParameterInformation paramInfo) {
@@ -774,10 +1046,10 @@ public class Experiments extends GResource {
 		}
 	}
 
-	@POST
+	@PUT
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/{experiment}/operations/add")
+	@Path("/{experiment}/operations")
 	public Response addExperimentOperation(
 			@PathParam("experiment") String experiment,
 			OperationInformation opInfo) {
@@ -792,30 +1064,6 @@ public class Experiments extends GResource {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
 			return this.processError(Status.NOT_FOUND, e);
-		}
-	}
-
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/{experiment}/features/add")
-	public Response addExperimentFeature(
-			@PathParam("experiment") String experiment,
-			FeatureInformation featureInfo) {
-
-		this.setupRegularAuthorization(request);
-
-		try {
-			experiments.addExperimentFeature(experiment, featureInfo);
-			return this.processSuccess();
-
-		} catch (ExperimentException e) {
-			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
-		} catch (NoSuchExperimentException e) {
-			return this.processError(Status.NOT_FOUND, e);
-		} catch (OperationTypeNotAvailableException
-				| ParameterTypeNotAvailableException e) {
-			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
 
@@ -851,21 +1099,6 @@ public class Experiments extends GResource {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/engine/features")
-	public Response getAllFeatures() {
-
-		this.setupRegularAuthorization(request);
-
-		try {
-			Set<String> features = experiments.getAllExperimentFeatures();
-			return this.processSuccess(features);
-		} catch (ExperimentException e) {
-			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
-		}
-	}
-
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/engine/parameters/{name}")
 	public Response getExperimentParameter(@PathParam("name") String name) {
 
@@ -874,9 +1107,39 @@ public class Experiments extends GResource {
 		try {
 			ExperimentParameter parameter = experiments
 					.getExperimentParameter(name);
-			return this.processSuccess(parameter);
+
+			LinkedHashMap<String, Object> paramData = new LinkedHashMap<String, Object>();
+
+			paramData.put("name", name);
+			paramData.put("description", parameter.getDescription());
+			paramData.put("value-class", parameter.getType().getValueType());
+			paramData.put("operation-dep", parameter.getType()
+					.isOperationDependent());
+			List<Object> signature = new ArrayList<Object>();
+			paramData.put("signature", signature);
+
+			int i = 0;
+			for (Class<?> arg : parameter.getType().getArgumentTypes()) {
+				LinkedHashMap<String, Object> argData = new LinkedHashMap<String, Object>();
+				argData.put("class", arg);
+
+				try {
+					argData.put("name", parameter.getType().getArgumentNames()
+							.get(i));
+				} catch (Exception e) {
+					argData.put("name", "?");
+				}
+
+				signature.add(argData);
+				i++;
+			}
+
+			return this.processSuccess(paramData);
+
 		} catch (ExperimentException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchParameterException e) {
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 
@@ -890,26 +1153,41 @@ public class Experiments extends GResource {
 		try {
 			ExperimentOperation operation = experiments
 					.getExperimentOperation(name);
-			return this.processSuccess(operation);
+
+			LinkedHashMap<String, Object> opData = new LinkedHashMap<String, Object>();
+
+			opData.put("name", name);
+			opData.put("description", operation.getDescription());
+			opData.put("behaviour-classes", operation.getBehaviour().keySet());
+
+			ExperimentParameter[] argumentTypes = operation.getParameterTypes();
+			List<Object> signature = new ArrayList<Object>();
+			opData.put("signature", signature);
+
+			int i = 0;
+			for (ExperimentParameter param : argumentTypes) {
+				LinkedHashMap<String, Object> paramData = new LinkedHashMap<String, Object>();
+				try {
+					paramData.put("name", operation.getParameterNames()[i]);
+				} catch (Exception e) {
+					paramData.put("name", "?");
+				}
+
+				paramData.put("type", param.getName());
+				paramData.put("value-class", param.getType().getValueType());
+				paramData.put("operation-dep", param.getType()
+						.isOperationDependent());
+
+				signature.add(paramData);
+				i++;
+			}
+
+			return this.processSuccess(opData);
 
 		} catch (ExperimentException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
-		}
-	}
-
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/engine/features/{name}")
-	public Response getExperimentFeature(@PathParam("name") String name) {
-
-		this.setupRegularAuthorization(request);
-
-		try {
-			ExperimentFeature feature = experiments.getExperimentFeature(name);
-			return this.processSuccess(feature);
-
-		} catch (ExperimentException e) {
-			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchOperationException e) {
+			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
 

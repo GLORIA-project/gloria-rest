@@ -35,6 +35,7 @@ import eu.gloria.gs.services.teleoperation.fw.FilterWheelTeleoperationException;
 import eu.gloria.gs.services.teleoperation.fw.FilterWheelTeleoperationInterface;
 import eu.gloria.gs.services.teleoperation.generic.GenericTeleoperationException;
 import eu.gloria.gs.services.teleoperation.generic.GenericTeleoperationInterface;
+import eu.gloria.gs.services.teleoperation.mount.MountState;
 import eu.gloria.gs.services.teleoperation.mount.MountTeleoperationException;
 import eu.gloria.gs.services.teleoperation.mount.MountTeleoperationInterface;
 import eu.gloria.gs.services.teleoperation.scam.SCamTeleoperationException;
@@ -420,7 +421,7 @@ public class Teleoperation extends GResource {
 	}
 
 	@GET
-	@Path("/mount/slewRADEC/{rt}/{mount}")
+	@Path("/mount/slewObject/{rt}/{mount}")
 	public Response slewToObject(@PathParam("rt") String rt,
 			@PathParam("mount") String mount,
 			@QueryParam("object") String object) {
@@ -457,7 +458,7 @@ public class Teleoperation extends GResource {
 	}
 
 	@GET
-	@Path("/mount/slewObject/{rt}/{mount}")
+	@Path("/mount/slewRADEC/{rt}/{mount}")
 	public Response slewToRADEC(@PathParam("rt") String rt,
 			@PathParam("mount") String mount, @QueryParam("ra") double ra,
 			@QueryParam("dec") double dec) {
@@ -517,6 +518,26 @@ public class Teleoperation extends GResource {
 			}
 
 			return this.processSuccess();
+		} catch (MountTeleoperationException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
+		} catch (DeviceOperationFailedException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		}
+	}
+	
+	@GET
+	@Path("/mount/status/{rt}/{mount}")
+	public Response getMountStatus(@PathParam("rt") String rt,
+			@PathParam("mount") String mount) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+				MountState state = mounts.getState(rt, mount);
+				LinkedHashMap<String, Object> stateResult = new LinkedHashMap<String, Object>();
+				stateResult.put("state", state.name());
+
+			return this.processSuccess(stateResult);
 		} catch (MountTeleoperationException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (DeviceOperationFailedException e) {

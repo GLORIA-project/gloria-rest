@@ -58,8 +58,9 @@ public class Telescopes extends GResource {
 
 		this.addInterfaceOperation(operations, "get all telescopes", "/list",
 				"", "get");
-		this.addInterfaceOperation(operations, "get all interactive telescopes", "/interactive/list",
-				"", "get");
+		this.addInterfaceOperation(operations,
+				"get all interactive telescopes", "/interactive/list", "",
+				"get");
 
 		return this.processSuccess(operations);
 	}

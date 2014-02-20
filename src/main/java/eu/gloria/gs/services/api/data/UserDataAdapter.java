@@ -184,12 +184,28 @@ public class UserDataAdapter {
 
 		String newPassword = tokenizer.nextSessionId().substring(0, 8);
 
-		this.verificationService.setNewPassword(alias, newPassword);
-
 		if (alias != null) {
+			this.verificationService.setNewPasswordByAlias(alias, newPassword);
 			this.verificationService.setResetRequestByAlias(alias);
 		} else if (email != null) {
+			this.verificationService.setNewPasswordByEmail(email, newPassword);
 			this.verificationService.setResetRequestByEmail(email);
+		} else {
+			LogAction log = new LogAction();
+			log.put("cause", "not enough identifiers");
+			throw new UserDataAdapterException(log);
+		}
+	}
+
+	public void requestChangePassword(String alias, String email,
+			String newPassword) throws UserDataAdapterException {
+
+		if (alias != null) {
+			this.verificationService.setNewPasswordByAlias(alias, SHA1.encode(newPassword));
+			this.verificationService.setChangePasswordRequestByAlias(alias);
+		} else if (email != null) {
+			this.verificationService.setNewPasswordByEmail(email, SHA1.encode(newPassword));
+			this.verificationService.setChangePasswordRequestByEmail(email);
 		} else {
 			LogAction log = new LogAction();
 			log.put("cause", "not enough identifiers");
@@ -214,6 +230,15 @@ public class UserDataAdapter {
 		}
 	}
 
+	public void clearChangePassword(String alias)
+			throws UserDataAdapterException {
+		try {
+			this.verificationService.clearChangePasswordRequest(alias);
+		} catch (PersistenceException e) {
+			throw new UserDataAdapterException();
+		}
+	}
+
 	public void setWaitForReset(String alias) throws UserDataAdapterException {
 		try {
 			this.verificationService.setWaitingForReset(alias);
@@ -222,9 +247,27 @@ public class UserDataAdapter {
 		}
 	}
 
+	public void setWaitForChangePassword(String alias)
+			throws UserDataAdapterException {
+		try {
+			this.verificationService.setWaitingForChangePassword(alias);
+		} catch (PersistenceException e) {
+			throw new UserDataAdapterException();
+		}
+	}
+
 	public void setResetObsolete(String alias) throws UserDataAdapterException {
 		try {
 			this.verificationService.setResetObsolete(alias);
+		} catch (PersistenceException e) {
+			throw new UserDataAdapterException();
+		}
+	}
+
+	public void setChangePasswordObsolete(String alias)
+			throws UserDataAdapterException {
+		try {
+			this.verificationService.setChangePasswordObsolete(alias);
 		} catch (PersistenceException e) {
 			throw new UserDataAdapterException();
 		}
@@ -243,6 +286,15 @@ public class UserDataAdapter {
 			throws UserDataAdapterException {
 		try {
 			return this.verificationService.isWaitingForReset(alias);
+		} catch (PersistenceException e) {
+			throw new UserDataAdapterException();
+		}
+	}
+
+	public boolean isWaitingForChangePassword(String alias)
+			throws UserDataAdapterException {
+		try {
+			return this.verificationService.isWaitingForChangePassword(alias);
 		} catch (PersistenceException e) {
 			throw new UserDataAdapterException();
 		}
@@ -274,6 +326,15 @@ public class UserDataAdapter {
 		}
 	}
 
+	public boolean isChangePasswordRequested(String alias)
+			throws UserDataAdapterException {
+		try {
+			return this.verificationService.isChangePasswordRequested(alias);
+		} catch (PersistenceException e) {
+			throw new UserDataAdapterException();
+		}
+	}
+
 	public UserVerificationEntry getVerificationByAlias(String alias)
 			throws UserDataAdapterException {
 		UserVerificationEntry entry = this.verificationService
@@ -286,6 +347,22 @@ public class UserDataAdapter {
 		LogAction log = new LogAction();
 		log.put("message", "Alias does not exist");
 		log.put("alias", alias);
+
+		throw new UserDataAdapterException(log);
+	}
+
+	public UserVerificationEntry getVerificationByEmail(String email)
+			throws UserDataAdapterException {
+		UserVerificationEntry entry = this.verificationService
+				.getByEmail(email);
+
+		if (entry != null) {
+			return entry;
+		}
+
+		LogAction log = new LogAction();
+		log.put("message", "Email does not exist");
+		log.put("alias", email);
 
 		throw new UserDataAdapterException(log);
 	}
@@ -335,6 +412,21 @@ public class UserDataAdapter {
 		throw new UserDataAdapterException(log);
 	}
 
+	public List<UserVerificationEntry> getPendingChangePasswordRequests()
+			throws UserDataAdapterException {
+		List<UserVerificationEntry> entries = this.verificationService
+				.getPendingChangePasswordRequests();
+
+		if (entries != null) {
+			return entries;
+		}
+
+		LogAction log = new LogAction();
+		log.put("message", "There are no pending change password requests");
+
+		throw new UserDataAdapterException(log);
+	}
+
 	public List<UserVerificationEntry> getWaitingResetRequests()
 			throws UserDataAdapterException {
 		List<UserVerificationEntry> entries = this.verificationService
@@ -346,6 +438,21 @@ public class UserDataAdapter {
 
 		LogAction log = new LogAction();
 		log.put("message", "There are no waiting reset requests");
+
+		throw new UserDataAdapterException(log);
+	}
+
+	public List<UserVerificationEntry> getWaitingChangePasswordRequests()
+			throws UserDataAdapterException {
+		List<UserVerificationEntry> entries = this.verificationService
+				.getWaitingChangePasswordRequests();
+
+		if (entries != null) {
+			return entries;
+		}
+
+		LogAction log = new LogAction();
+		log.put("message", "There are no waiting change password requests");
 
 		throw new UserDataAdapterException(log);
 	}
@@ -384,7 +491,7 @@ public class UserDataAdapter {
 			throws UserDataAdapterException {
 
 		try {
-			this.verificationService.setNewPassword(alias, password);
+			this.verificationService.setNewPasswordByAlias(alias, password);
 		} catch (PersistenceException e) {
 			throw new UserDataAdapterException();
 		}

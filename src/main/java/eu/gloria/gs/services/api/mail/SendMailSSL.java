@@ -78,7 +78,7 @@ public class SendMailSSL {
 
 	public void sendNotification(String userEmail, String alias, String code)
 			throws Exception {
-		
+
 		String subject = "Welcome to GLORIA! Please verify your address";
 		String content = "<img src=http://gloria-project.eu/wp-content/uploads/2012/10/banner-transpa-notext-250.png>";
 		String url = this.apiAddress + "/mail?check&code=" + code;
@@ -101,13 +101,32 @@ public class SendMailSSL {
 		String url = this.apiAddress + "/mail?reset&code=" + code;
 
 		content += "<p>Hi " + alias + "!</p>";
-		content += "<p>If you follow the link below, your new password will be <strong>" + password
-				+ "</strong></p><a href=" + url
+		content += "<p>If you follow the link below, your new password will be <strong>"
+				+ password
+				+ "</strong></p><a href="
+				+ url
 				+ ">Click to activate the new password</a></p>";
 		content += "<br>";
 		content += "<p>Sincerely,<br>GLORIA Team</p>";
 		content += "<p><i>Follow us in <a href=https://www.facebook.com/GLORIAProject?fref=ts>Facebook</a><i></p>";
-		
+
+		this.sendMail(userEmail, subject, content);
+	}
+
+	public void sendChangePassword(String userEmail, String alias, String code,
+			String password) throws Exception {
+
+		String subject = "GLORIA account password change";
+		String content = "<img src=http://gloria-project.eu/wp-content/uploads/2012/10/banner-transpa-notext-250.png>";
+		String url = this.apiAddress + "/mail?password&code=" + code;
+
+		content += "<p>Hi " + alias + "!</p>";
+		content += "<p>If you follow the link below, your new password will be activated.</p><a href="
+				+ url + ">Click to activate the new password</a></p>";
+		content += "<br>";
+		content += "<p>Sincerely,<br>GLORIA Team</p>";
+		content += "<p><i>Follow us in <a href=https://www.facebook.com/GLORIAProject?fref=ts>Facebook</a><i></p>";
+
 		this.sendMail(userEmail, subject, content);
 	}
 

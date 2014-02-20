@@ -12,7 +12,25 @@ package eu.gloria.gs.services.api.resources;
 public class UpdateUserRequest {
 
 	private String alias;
+	private String email;
 	private String password;
+	private String ocupation;
+
+	public String getOcupation() {
+		return ocupation;
+	}
+
+	public void setOcupation(String ocupation) {
+		this.ocupation = ocupation;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
 
 	public String getAlias() {
 		return alias;

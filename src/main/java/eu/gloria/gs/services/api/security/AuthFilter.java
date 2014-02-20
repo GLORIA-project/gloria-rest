@@ -89,9 +89,9 @@ public class AuthFilter implements ContainerRequestFilter {
 			if (lap == null || lap.length != 2) {
 				throw new WebApplicationException(Status.UNAUTHORIZED);
 			}
-			
+
 			if (lap[0].equals("public") && lap[1].equals("public")) {
-				return containerRequest;				
+				return containerRequest;
 			}
 
 			UserEntry entry = null;
@@ -107,8 +107,7 @@ public class AuthFilter implements ContainerRequestFilter {
 
 			if (entry != null && entry.getActive() > 0) {
 
-				if (new Date().getTime()
-						- entry.getTokenUpdateDate().getTime() < 1800000) {
+				if (new Date().getTime() - entry.getTokenUpdateDate().getTime() < 10800000) {
 					name = entry.getName();
 					actualPassword = entry.getPassword();
 					try {
@@ -155,10 +154,16 @@ public class AuthFilter implements ContainerRequestFilter {
 
 					if (actives != null && actives.size() > 0) {
 						for (UserEntry user : actives) {
-							if (!remote.equals(user.getRemote())
-									|| !userAgent.equals(user.getAgent())) {
-								userAdapter.deactivateToken(user.getToken());
+							if (new Date().getTime()
+									- user.getTokenUpdateDate().getTime() > 10800000) {
 								newToken = true;
+							} else {
+								if (!remote.equals(user.getRemote())
+										|| !userAgent.equals(user.getAgent())) {
+									userAdapter
+											.deactivateToken(user.getToken());
+									newToken = true;
+								}
 							}
 						}
 					} else {
@@ -167,8 +172,7 @@ public class AuthFilter implements ContainerRequestFilter {
 
 					if (newToken) {
 						String token = userAdapter.createToken(name,
-								actualPassword, language, userAgent,
-								remote);
+								actualPassword, language, userAgent, remote);
 
 						userAdapter.activateToken(token);
 						userAdapter.deactivateOtherTokens(name, token);

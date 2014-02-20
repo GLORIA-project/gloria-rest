@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>GLORIAAPI</name>
+	<name>gloria-rest</name>
 	<comment></comment>
 	<projects>
-		<project>ServiceTools</project>
-		<project>GLORIAInterfaces</project>
-		<project>SClientTools</project>
+		<project>service-tools</project>
+		<project>client-tools</project>
+		<project>gloria-commons</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

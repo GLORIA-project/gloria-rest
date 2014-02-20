@@ -93,6 +93,20 @@ public class VerificationMonitor extends ServerThread {
 		} catch (UserDataAdapterException e) {
 		} catch (Exception e) {
 		}
+		
+		try {
+			List<UserVerificationEntry> resets = adapter
+					.getPendingChangePasswordRequests();
+
+			for (UserVerificationEntry entry : resets) {
+				this.mailSender.sendChangePassword(entry.getEmail(), entry.getAlias(),
+						entry.getCode(), entry.getNewPassword());
+				this.adapter.setWaitForChangePassword(entry.getAlias());
+			}
+		} catch (UserDataAdapterException e) {
+		} catch (Exception e) {
+		}
+
 
 		if (analyzeWaitingOnes) {
 			analyzeWaitingOnes = false;
@@ -121,6 +135,21 @@ public class VerificationMonitor extends ServerThread {
 				for (UserVerificationEntry entry : waitingResets) {
 					if (now.getTime() - entry.getResetRequestDate().getTime() > MS_PER_DAY) {
 						adapter.setResetObsolete(entry.getAlias());
+					}
+				}
+
+			} catch (UserDataAdapterException e) {
+			} catch (Exception e) {
+			}
+			
+			try {
+
+				List<UserVerificationEntry> waitingResets = adapter
+						.getWaitingChangePasswordRequests();
+
+				for (UserVerificationEntry entry : waitingResets) {
+					if (now.getTime() - entry.getChPassRequestDate().getTime() > MS_PER_DAY) {
+						adapter.setChangePasswordObsolete(entry.getAlias());
 					}
 				}
 
