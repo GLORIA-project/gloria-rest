@@ -44,7 +44,8 @@ public class Scheduler extends GResource {
 	@Context
 	HttpServletRequest request;
 
-	private static SchedulerInterface scheduler = GSClientProvider.getSchedulerClient();
+	private static SchedulerInterface scheduler = GSClientProvider
+			.getSchedulerClient();
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -70,14 +71,45 @@ public class Scheduler extends GResource {
 	@Path("/plans/request")
 	public Response schedule(ObservingPlanInformation opInfo) {
 
-		String username = (String) request.getAttribute("user");
+		String username = this.getUsername(request);
 
 		this.setupRegularAuthorization(request);
 
 		try {
 			opInfo.setUser(username);
+
+			if (opInfo.getTargetAltitude() == null) {
+				opInfo.setTargetAltitude(1.0);
+			}
+
+			if (opInfo.getMoonAltitude() == null) {
+				opInfo.setMoonAltitude(1.0);
+			}
+
+			if (opInfo.getMoonDistance() == null) {
+				opInfo.setMoonDistance(1.0);
+			}
+
+			if (opInfo.getExposure() == null) {
+				opInfo.setExposure(10.0);
+			}
+
+			if (opInfo.getFilter() == null) {
+				opInfo.setFilter("OPEN");
+			}
+
+			if (opInfo.getDescription() == null) {
+				return this.processError(Status.BAD_REQUEST, "input error",
+						"description is needed");
+			}
+
+			if (opInfo.getObject() == null) {
+				return this.processError(Status.BAD_REQUEST, "input error",
+						"object is needed");
+			}
+
 			int id = scheduler.schedule(opInfo);
-			
+
 			return this.processSuccess(id);
 
 		} catch (SchedulerException e) {
@@ -85,11 +117,9 @@ public class Scheduler extends GResource {
 		} catch (SchedulerDatabaseException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (MaxUserSchedulesException e) {
-			return Response.status(Status.NOT_ACCEPTABLE)
-					.entity(e.getMessage()).build();
+			return this.processError(Status.NOT_ACCEPTABLE, e);
 		} catch (InvalidObservingPlanException e) {
-			return Response.status(Status.BAD_REQUEST).entity(e.getMessage())
-					.build();
+			return this.processError(Status.BAD_REQUEST, e);
 		}
 	}
 
@@ -103,20 +133,20 @@ public class Scheduler extends GResource {
 		try {
 
 			List<ScheduleInformation> schInfos = scheduler.getMyActivePlans();
-			
+
 			if (schInfos == null) {
 				schInfos = new ArrayList<>();
 			}
 
 			return this.processSuccess(schInfos);
 
-		} catch (SchedulerException  e) {
+		} catch (SchedulerException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (ScheduleNotFoundException e) {
 			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/plans/inactive")
@@ -130,13 +160,13 @@ public class Scheduler extends GResource {
 
 			return this.processSuccess(schInfos);
 
-		} catch (SchedulerException  e) {
+		} catch (SchedulerException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (ScheduleNotFoundException e) {
 			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{rt}/plans")
@@ -150,13 +180,13 @@ public class Scheduler extends GResource {
 
 			return this.processSuccess(schInfos);
 
-		} catch (SchedulerException  e) {
+		} catch (SchedulerException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (ScheduleNotFoundException e) {
 			return this.processError(Status.NOT_FOUND, e);
 		}
-	}	
-	
+	}
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{rt}/plans/active")
@@ -170,7 +200,7 @@ public class Scheduler extends GResource {
 
 			return this.processSuccess(schInfos);
 
-		} catch (SchedulerException  e) {
+		} catch (SchedulerException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (ScheduleNotFoundException e) {
 			return this.processError(Status.NOT_FOUND, e);
