@@ -79,15 +79,15 @@ public class Scheduler extends GResource {
 			opInfo.setUser(username);
 
 			if (opInfo.getTargetAltitude() == null) {
-				opInfo.setTargetAltitude(1.0);
+				opInfo.setTargetAltitude(15.0);
 			}
 
 			if (opInfo.getMoonAltitude() == null) {
-				opInfo.setMoonAltitude(1.0);
+				opInfo.setMoonAltitude(15.0);
 			}
 
 			if (opInfo.getMoonDistance() == null) {
-				opInfo.setMoonDistance(1.0);
+				opInfo.setMoonDistance(15.0);
 			}
 
 			if (opInfo.getExposure() == null) {

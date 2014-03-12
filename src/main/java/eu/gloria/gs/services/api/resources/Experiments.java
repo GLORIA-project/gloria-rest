@@ -31,6 +31,7 @@ import javax.ws.rs.core.Response.Status;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.experiment.ExperimentException;
 import eu.gloria.gs.services.experiment.ExperimentInterface;
+import eu.gloria.gs.services.experiment.ScriptSlot;
 import eu.gloria.gs.services.experiment.base.data.ExperimentInformation;
 import eu.gloria.gs.services.experiment.base.data.ExperimentRuntimeInformation;
 import eu.gloria.gs.services.experiment.base.data.NoSuchExperimentException;
@@ -53,8 +54,12 @@ import eu.gloria.gs.services.experiment.base.reservation.ExperimentReservationAr
 import eu.gloria.gs.services.experiment.base.reservation.MaxReservationTimeException;
 import eu.gloria.gs.services.experiment.base.reservation.NoReservationsAvailableException;
 import eu.gloria.gs.services.experiment.base.reservation.NoSuchReservationException;
+import eu.gloria.gs.services.experiment.script.NoSuchScriptException;
+import eu.gloria.gs.services.experiment.script.OverlapRTScriptException;
+import eu.gloria.gs.services.experiment.script.data.RTScriptInformation;
 import eu.gloria.gs.services.repository.rt.RTRepositoryException;
 import eu.gloria.gs.services.repository.rt.RTRepositoryInterface;
+import eu.gloria.gs.services.repository.user.InvalidUserException;
 import eu.gloria.gs.services.utils.ObjectResponse;
 
 /**
@@ -1277,4 +1282,136 @@ public class Experiments extends GResource {
 			return this.processError(Status.NOT_FOUND, e);
 		}
 	}
+
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/scripts/{rt}")
+	public Response registerRTScript(@PathParam("rt") String rt,
+			RegisterRTScriptRequest data) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+			double seconds = data.getSlot().getLength();
+			if (seconds == 0) {
+				data.getSlot().setLength(60000);
+			}
+
+			int sid = experiments.registerRTScript(rt, data.getSlot(),
+					data.getOperation(), JSONConverter.toJSON(data.getInit()),
+					JSONConverter.toJSON(data.getResult()), data.isNotify());
+
+			return this.processSuccess(sid);
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchExperimentException | OverlapRTScriptException e) {
+			return this.processError(Status.BAD_REQUEST, e);
+		} catch (InvalidUserException e) {
+			return this.processError(Status.BAD_REQUEST, e);
+		}
+	}
+
+	@GET
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/scripts/{rt}")
+	public Response getAllRTScript(@PathParam("rt") String rt) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+
+			List<RTScriptInformation> allScripts = new ArrayList<RTScriptInformation>();
+
+			List<Integer> scriptIds = experiments.getAllRTScripts(rt);
+			if (scriptIds != null) {
+				for (int id : scriptIds) {
+					RTScriptInformation scriptInfo = experiments
+							.getRTScriptInformation(id);
+					scriptInfo.setInit(JSONConverter.fromJSON(
+							(String) scriptInfo.getInit(), Object.class, null));
+					allScripts.add(scriptInfo);
+				}
+			}
+
+			return this.processSuccess(allScripts);
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchScriptException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		}
+	}
+
+	@GET
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/scripts/{rt}/operations")
+	public Response getRTScriptAvailableOperations(@PathParam("rt") String rt) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+
+			List<String> operations = experiments
+					.getRTScriptAvailableOperations(rt);
+			return this.processSuccess(operations);
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchScriptException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		}
+	}
+
+	@GET
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/scripts/id/{sid}")
+	public Response getRTScript(@PathParam("sid") int sid) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+
+			RTScriptInformation scriptInfo = experiments
+					.getRTScriptInformation(sid);
+
+			scriptInfo.setInit(JSONConverter.fromJSON(
+					(String) scriptInfo.getInit(), Object.class, null));
+
+			return this.processSuccess(scriptInfo);
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchScriptException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		}
+	}
+
+	@DELETE
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/scripts/id/{sid}")
+	public Response removeRTScript(@PathParam("sid") int sid) {
+
+		this.setupRegularAuthorization(request);
+
+		try {
+
+			experiments.removeRTScript(sid);
+
+			return this.processSuccess();
+
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (NoSuchScriptException e) {
+			return this.processError(Status.NOT_FOUND, e);
+		} catch (InvalidUserException e) {
+			return this.processError(Status.FORBIDDEN, e);
+		}
+	}
+
 }

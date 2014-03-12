@@ -57,7 +57,7 @@ public class Images extends GResource {
 					calendar.get(Calendar.DAY_OF_YEAR) - 10);
 
 			List<Integer> ids = images.getAllImageIdentifiersByDate(
-					calendar.getTime(), new Date());
+					calendar.getTime(), new Date(), 10);
 
 			return this.processSuccess(ids);
 
@@ -137,15 +137,15 @@ public class Images extends GResource {
 
 			Date toDate = calendar.getTime();
 
-			List<Integer> ids = images.getAllImageIdentifiersByDate(fromDate,
-					toDate);
+			if (maxResults == null) {
+				maxResults = 10;
+			}
+			
+			List<Integer> ids = images.getRandomImageIdentifiersByDate(fromDate,
+					toDate, maxResults);
 
 			if (ids == null) {
 				ids = new ArrayList<Integer>();
-			}
-
-			if (maxResults != null) {
-				ids = ids.subList(0, Math.min(ids.size(), maxResults));
 			}
 
 			if (!complete) {
