@@ -29,7 +29,7 @@ public class VerificationMonitor extends ServerThread {
 	/**
 	 * @param name
 	 */
-	public VerificationMonitor(String name) {
+	public VerificationMonitor() {
 		super(VerificationMonitor.class.getSimpleName());
 	}
 
