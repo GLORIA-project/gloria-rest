@@ -25,7 +25,14 @@ public class VerificationMonitor extends ServerThread {
 	private static boolean analyzeWaitingOnes = true;
 	private static int waitingCount = 0;
 	private static int MS_PER_DAY = 86400000;
-	
+
+	/**
+	 * @param name
+	 */
+	public VerificationMonitor(String name) {
+		super(VerificationMonitor.class.getSimpleName());
+	}
+
 	public void setAdapter(UserDataAdapter adapter) {
 		this.adapter = adapter;
 	}
@@ -62,8 +69,7 @@ public class VerificationMonitor extends ServerThread {
 				analyzeWaitingOnes = true;
 			}
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.warn(e.getMessage());
 		}
 
 		GSClientProvider.setCredentials(this.username, this.password);
@@ -93,20 +99,20 @@ public class VerificationMonitor extends ServerThread {
 		} catch (UserDataAdapterException e) {
 		} catch (Exception e) {
 		}
-		
+
 		try {
 			List<UserVerificationEntry> resets = adapter
 					.getPendingChangePasswordRequests();
 
 			for (UserVerificationEntry entry : resets) {
-				this.mailSender.sendChangePassword(entry.getEmail(), entry.getAlias(),
-						entry.getCode(), entry.getNewPassword());
+				this.mailSender.sendChangePassword(entry.getEmail(),
+						entry.getAlias(), entry.getCode(),
+						entry.getNewPassword());
 				this.adapter.setWaitForChangePassword(entry.getAlias());
 			}
 		} catch (UserDataAdapterException e) {
 		} catch (Exception e) {
 		}
-
 
 		if (analyzeWaitingOnes) {
 			analyzeWaitingOnes = false;
@@ -141,7 +147,7 @@ public class VerificationMonitor extends ServerThread {
 			} catch (UserDataAdapterException e) {
 			} catch (Exception e) {
 			}
-			
+
 			try {
 
 				List<UserVerificationEntry> waitingResets = adapter

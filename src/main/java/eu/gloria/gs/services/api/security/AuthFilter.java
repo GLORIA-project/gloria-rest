@@ -8,6 +8,8 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response.Status;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import com.sun.jersey.spi.container.ContainerRequest;
@@ -27,6 +29,9 @@ public class AuthFilter implements ContainerRequestFilter {
 	private static String adminUsername;
 	private static String adminPassword;
 	private static UserDataAdapter userAdapter;
+
+	private static Logger log = LoggerFactory.getLogger(AuthFilter.class
+			.getSimpleName());
 
 	static {
 
@@ -114,8 +119,7 @@ public class AuthFilter implements ContainerRequestFilter {
 						userAdapter.updateLastDate(entry.getToken());
 						authenticated = true;
 					} catch (UserDataAdapterException e) {
-						// throw new
-						// WebApplicationException(Status.UNAUTHORIZED);
+						log.error(e.getMessage());
 					}
 				} else {
 					userAdapter.deactivateToken(entry.getToken());
@@ -184,10 +188,9 @@ public class AuthFilter implements ContainerRequestFilter {
 					sr.setAttribute("agent", userAgent);
 
 				} catch (UserRepositoryException e) {
-
+					log.error(e.getMessage());
 				} catch (UserDataAdapterException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					log.error(e.getMessage());
 				}
 			}
 

@@ -3,9 +3,6 @@
 	<name>gloria-rest</name>
 	<comment></comment>
 	<projects>
-		<project>service-tools</project>
-		<project>client-tools</project>
-		<project>gloria-commons</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -14,8 +14,6 @@ public class SHA1 {
 		try {
 			mDigest = MessageDigest.getInstance("SHA1");
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 
 		byte[] bytes;
@@ -26,8 +24,6 @@ public class SHA1 {
 			String hash = (new BASE64Encoder()).encode(digest);
 			return hash;
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 
 		return null;
