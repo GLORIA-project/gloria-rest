@@ -30,7 +30,6 @@ import eu.gloria.gs.services.scheduler.brain.MaxUserSchedulesException;
 import eu.gloria.gs.services.scheduler.data.ObservingPlanInformation;
 import eu.gloria.gs.services.scheduler.data.ScheduleInformation;
 import eu.gloria.gs.services.scheduler.data.ScheduleNotFoundException;
-import eu.gloria.gs.services.scheduler.data.SchedulerDatabaseException;
 
 /**
  * @author Fernando Serena (fserena@ciclope.info)
@@ -113,8 +112,6 @@ public class Scheduler extends GResource {
 			return this.processSuccess(id);
 
 		} catch (SchedulerException e) {
-			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
-		} catch (SchedulerDatabaseException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (MaxUserSchedulesException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);

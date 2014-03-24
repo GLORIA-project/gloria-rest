@@ -9,32 +9,6 @@
 
 	<name>GloriAPI</name>
 	<url>http://maven.apache.org</url>
-	<build>
-		<sourceDirectory>src</sourceDirectory>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>tomcat-maven-plugin</artifactId>
-				<version>1.1</version>
-				<configuration>
-					<url>http://saturno.datsi.fi.upm.es:8080/manager/text</url>
-					<server>saturno</server>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
 
 	<dependencies>
 		<dependency>
@@ -68,15 +42,6 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>commons-dbcp</groupId>
-			<artifactId>commons-dbcp</artifactId>
-			<version>1.4</version>
-			<scope>provided</scope>
-		</dependency>
-
-
-		<!-- Mybatis Spring -->
-		<dependency>
 			<groupId>org.mybatis</groupId>
 			<artifactId>mybatis-spring</artifactId>
 			<version>1.1.1</version>
@@ -88,7 +53,6 @@
 			<version>1.4</version>
 			<scope>provided</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
@@ -111,9 +75,18 @@
 			<version>0.0.2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.0.9</version>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.2</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
+	<parent>
+		<groupId>eu.gloria</groupId>
+		<artifactId>gloria-app</artifactId>
+		<version>1.0.0</version>
+	</parent>
+	<properties>
+		<maven.tomcat.path>/api</maven.tomcat.path>
+	</properties>
 </project>

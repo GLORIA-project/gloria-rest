@@ -31,9 +31,9 @@ import javax.ws.rs.core.Response.Status;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.experiment.ExperimentException;
 import eu.gloria.gs.services.experiment.ExperimentInterface;
-import eu.gloria.gs.services.experiment.ScriptSlot;
 import eu.gloria.gs.services.experiment.base.data.ExperimentInformation;
 import eu.gloria.gs.services.experiment.base.data.ExperimentRuntimeInformation;
+import eu.gloria.gs.services.experiment.base.data.ExperimentType;
 import eu.gloria.gs.services.experiment.base.data.NoSuchExperimentException;
 import eu.gloria.gs.services.experiment.base.data.OperationInformation;
 import eu.gloria.gs.services.experiment.base.data.ParameterInformation;
@@ -126,7 +126,7 @@ public class Experiments extends GResource {
 		this.setupRegularAuthorization(request);
 
 		try {
-			List<String> names = experiments.getAllOnlineExperiments();
+			List<String> names = experiments.getAllExperiments(ExperimentType.ONLINE);
 
 			return this.processSuccess(names);
 
@@ -143,7 +143,7 @@ public class Experiments extends GResource {
 		this.setupRegularAuthorization(request);
 
 		try {
-			List<String> names = experiments.getAllOfflineExperiments();
+			List<String> names = experiments.getAllExperiments(ExperimentType.OFFLINE);
 
 			return this.processSuccess(names);
 
@@ -161,7 +161,7 @@ public class Experiments extends GResource {
 
 		try {
 			List<ReservationInformation> reservations = experiments
-					.getMyCurrentReservations();
+					.getMyCurrentReservations(null);
 
 			return this.processSuccess(reservations);
 
@@ -182,7 +182,7 @@ public class Experiments extends GResource {
 
 		try {
 			List<ReservationInformation> reservations = experiments
-					.getMyCurrentOnlineReservations();
+					.getMyCurrentReservations(ExperimentType.ONLINE);
 
 			return this.processSuccess(reservations);
 
@@ -202,7 +202,7 @@ public class Experiments extends GResource {
 
 		try {
 			List<ReservationInformation> reservations = experiments
-					.getMyCurrentOfflineReservations();
+					.getMyCurrentReservations(ExperimentType.OFFLINE);
 
 			return this.processSuccess(reservations);
 
@@ -222,7 +222,7 @@ public class Experiments extends GResource {
 
 		try {
 			List<ReservationInformation> reservations = experiments
-					.getMyPendingReservations();
+					.getMyPendingReservations(null);
 
 			return this.processSuccess(reservations);
 
@@ -242,7 +242,7 @@ public class Experiments extends GResource {
 
 		try {
 			List<ReservationInformation> reservations = experiments
-					.getMyPendingOnlineReservations();
+					.getMyPendingReservations(ExperimentType.ONLINE);
 
 			return this.processSuccess(reservations);
 
@@ -262,7 +262,7 @@ public class Experiments extends GResource {
 
 		try {
 			List<ReservationInformation> reservations = experiments
-					.getMyPendingOfflineReservations();
+					.getMyPendingReservations(ExperimentType.OFFLINE);
 
 			return this.processSuccess(reservations);
 

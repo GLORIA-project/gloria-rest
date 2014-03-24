@@ -105,7 +105,7 @@ public abstract class GResource {
 	protected Response processError(Status status, ActionException e) {
 
 		LinkedHashMap<String, Object> errorData = new LinkedHashMap<>();
-		errorData.put("type", e.getClass().getSimpleName());
+		//errorData.put("type", e.getClass().getSimpleName());
 		String messageStr = e.getMessage();
 		Object message = JSONConverter.fromJSON(messageStr,
 				LinkedHashMap.class, null);

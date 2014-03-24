@@ -22,6 +22,7 @@ import com.sun.jersey.spi.resource.Singleton;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.log.action.ActionLogException;
 import eu.gloria.gs.services.log.action.ActionLogInterface;
+import eu.gloria.gs.services.log.action.LogType;
 import eu.gloria.gs.services.utils.ObjectResponse;
 
 /**
@@ -72,7 +73,7 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log.getAllDateLogs(beginDateOf(today), endDateOf(today));
+			response = log.getLogs(beginDateOf(today), endDateOf(today), null);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -96,7 +97,7 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log.getAllDateLogs(beginDateOf(date), endDateOf(date));
+			response = log.getLogs(beginDateOf(date), endDateOf(date), null);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -114,8 +115,8 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log.getInfoLogsByDate(beginDateOf(today),
-					endDateOf(today));
+			response = log.getLogs(beginDateOf(today), endDateOf(today),
+					LogType.INFO);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -132,14 +133,14 @@ public class ActionLog extends GResource {
 		Date yesterday = new Date();
 		Calendar calendar = Calendar.getInstance();
 		int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
-		calendar.set(Calendar.DAY_OF_YEAR, dayOfYear-1);
+		calendar.set(Calendar.DAY_OF_YEAR, dayOfYear - 1);
 
 		yesterday = calendar.getTime();
 
 		ObjectResponse response;
 		try {
-			response = log.getInfoLogsByDate(beginDateOf(yesterday),
-					endDateOf(yesterday));
+			response = log.getLogs(beginDateOf(yesterday),
+					endDateOf(yesterday), LogType.INFO);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -163,8 +164,8 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log
-					.getInfoLogsByDate(beginDateOf(date), endDateOf(date));
+			response = log.getLogs(beginDateOf(date), endDateOf(date),
+					LogType.INFO);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -182,8 +183,8 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log.getErrorLogsByDate(beginDateOf(today),
-					endDateOf(today));
+			response = log.getLogs(beginDateOf(today), endDateOf(today),
+					LogType.ERROR);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -200,14 +201,14 @@ public class ActionLog extends GResource {
 		Date yesterday = new Date();
 		Calendar calendar = Calendar.getInstance();
 		int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
-		calendar.set(Calendar.DAY_OF_YEAR, dayOfYear-1);
+		calendar.set(Calendar.DAY_OF_YEAR, dayOfYear - 1);
 
 		yesterday = calendar.getTime();
 
 		ObjectResponse response;
 		try {
-			response = log.getErrorLogsByDate(beginDateOf(yesterday),
-					endDateOf(yesterday));
+			response = log.getLogs(beginDateOf(yesterday),
+					endDateOf(yesterday), LogType.ERROR);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -231,8 +232,8 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log.getErrorLogsByDate(beginDateOf(date),
-					endDateOf(date));
+			response = log.getLogs(beginDateOf(date), endDateOf(date),
+					LogType.ERROR);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -248,7 +249,7 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log.getAllRidLogs(rid);
+			response = log.getContextLogs(rid, null, null, null);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -264,7 +265,7 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log.getInfoRidLogs(rid);
+			response = log.getContextLogs(rid, null, null, LogType.INFO);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -282,8 +283,8 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log.getWarningRidLogsByDate(rid, beginDateOf(today),
-					endDateOf(today));
+			response = log.getContextLogs(rid, beginDateOf(today),
+					endDateOf(today), LogType.WARNING);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();
@@ -301,8 +302,8 @@ public class ActionLog extends GResource {
 
 		ObjectResponse response;
 		try {
-			response = log.getWarningRidLogsByDate(rid, beginDateOf(today),
-					endDateOf(today));
+			response = log.getContextLogs(rid, beginDateOf(today),
+					endDateOf(today), LogType.ERROR);
 			return Response.ok(response.content).build();
 		} catch (ActionLogException e) {
 			return Response.serverError().build();

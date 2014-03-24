@@ -9,26 +9,22 @@
 		<param-value>/WEB-INF/APIContext.xml</param-value>
 	</context-param>
 	<listener>
-		<listener-class>org.springframework.web.context.ContextLoaderListener
-		</listener-class>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
 	</listener>
 	<servlet>
 		<servlet-name>jersey-servlet</servlet-name>
-		<servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer
-		</servlet-class>
+		<servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
 		<init-param>
 			<param-name>com.sun.jersey.config.property.packages</param-name>
 			<param-value>eu.gloria.gs.services.api.resources</param-value>
 		</init-param>
 		<init-param>
-			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters
-			</param-name>
+			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
 			<param-value>eu.gloria.gs.services.api.security.AuthFilter
 			</param-value>
 		</init-param>
 		<init-param>
-			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters
-			</param-name>
+			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
 			<param-value>eu.gloria.gs.services.api.security.ResponseCorsFilter
 			</param-value>
 		</init-param>
@@ -44,8 +40,7 @@
 	</servlet-mapping>
 	<servlet>
 		<servlet-name>mail-servlet</servlet-name>
-		<servlet-class>eu.gloria.gs.services.api.mail.MailServlet
-		</servlet-class>
+		<servlet-class>eu.gloria.gs.services.api.mail.MailServlet</servlet-class>
 		<init-param>
 			<param-name>userAdapter</param-name>
 			<param-value>userDataAdapter</param-value>
@@ -68,7 +63,11 @@
 		<url-pattern>/mail</url-pattern>
 	</servlet-mapping>
 	<listener>
-		<listener-class>eu.gloria.gs.services.api.mail.VerificationTask
-		</listener-class>
+		<listener-class>eu.gloria.gs.services.api.mail.VerificationTask</listener-class>
 	</listener>
+	<env-entry>
+		<env-entry-name>logback/context-name</env-entry-name>
+		<env-entry-type>java.lang.String</env-entry-type>
+		<env-entry-value>gloria-rest</env-entry-value>
+	</env-entry>
 </web-app>

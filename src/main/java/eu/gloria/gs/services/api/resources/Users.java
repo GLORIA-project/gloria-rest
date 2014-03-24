@@ -24,9 +24,8 @@ import eu.gloria.gs.services.api.data.PasswordValidator;
 import eu.gloria.gs.services.api.data.UserDataAdapter;
 import eu.gloria.gs.services.api.data.dbservices.UserDataAdapterException;
 import eu.gloria.gs.services.api.data.dbservices.UserEntry;
-import eu.gloria.gs.services.api.security.SHA1;
 import eu.gloria.gs.services.core.client.GSClientProvider;
-import eu.gloria.gs.services.log.action.LogAction;
+import eu.gloria.gs.services.log.action.Action;
 import eu.gloria.gs.services.repository.user.UserRepositoryException;
 import eu.gloria.gs.services.repository.user.UserRepositoryInterface;
 import eu.gloria.gs.services.repository.user.data.UserInformation;
@@ -130,7 +129,7 @@ public class Users extends GResource {
 
 		this.setupPublicAuthorization();
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("action", "register");
 		log.put("email", regInfo.getEmail());
 		log.put("alias", regInfo.getAlias());
@@ -189,7 +188,7 @@ public class Users extends GResource {
 		this.setupPublicAuthorization();
 
 		String username = this.getUsername(request);
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("action", "deactivate");
 		log.put("email", username);
 
@@ -247,7 +246,7 @@ public class Users extends GResource {
 					"email");
 		}
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("alias", alias);
 		log.put("email", resetInfo.getEmail());
 
@@ -323,7 +322,7 @@ public class Users extends GResource {
 						"password");
 			}
 
-			LogAction log = new LogAction();
+			Action log = new Action();
 			log.put("alias", alias);
 			log.put("email", email);
 

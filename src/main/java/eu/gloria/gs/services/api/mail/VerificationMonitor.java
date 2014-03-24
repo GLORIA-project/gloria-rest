@@ -6,14 +6,12 @@ import java.util.List;
 import eu.gloria.gs.services.api.data.UserDataAdapter;
 import eu.gloria.gs.services.api.data.dbservices.UserDataAdapterException;
 import eu.gloria.gs.services.api.data.dbservices.UserVerificationEntry;
-import eu.gloria.gs.services.core.ErrorLogEntry;
-import eu.gloria.gs.services.core.InfoLogEntry;
 import eu.gloria.gs.services.core.LogEntry;
 import eu.gloria.gs.services.core.LogStore;
-import eu.gloria.gs.services.core.WarningLogEntry;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.core.tasks.ServerThread;
-import eu.gloria.gs.services.log.action.LogAction;
+import eu.gloria.gs.services.log.action.Action;
+import eu.gloria.gs.services.log.action.LogType;
 
 public class VerificationMonitor extends ServerThread {
 
@@ -165,29 +163,11 @@ public class VerificationMonitor extends ServerThread {
 		}
 	}
 
-	private void processLogEntry(LogEntry entry, LogAction action) {
+	private void processLogEntry(LogEntry entry, Action action) {
 		entry.setUsername(this.username);
 		entry.setDate(new Date());
 
 		entry.setAction(action);
 		this.logStore.addEntry(entry);
-	}
-
-	private void logError(LogAction action) {
-
-		LogEntry entry = new ErrorLogEntry();
-		this.processLogEntry(entry, action);
-	}
-
-	private void logInfo(LogAction action) {
-
-		LogEntry entry = new InfoLogEntry();
-		this.processLogEntry(entry, action);
-	}
-
-	private void logWarning(LogAction action) {
-
-		LogEntry entry = new WarningLogEntry();
-		this.processLogEntry(entry, action);
 	}
 }

@@ -11,7 +11,7 @@ import eu.gloria.gs.services.api.data.dbservices.UserEntry;
 import eu.gloria.gs.services.api.data.dbservices.UserVerificationEntry;
 import eu.gloria.gs.services.api.data.dbservices.UserVerificationService;
 import eu.gloria.gs.services.api.security.SHA1;
-import eu.gloria.gs.services.log.action.LogAction;
+import eu.gloria.gs.services.log.action.Action;
 
 public class UserDataAdapter {
 
@@ -95,7 +95,7 @@ public class UserDataAdapter {
 			return entry;
 		}
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("message", "The token does not exist");
 
 		throw new UserDataAdapterException(log);
@@ -107,7 +107,7 @@ public class UserDataAdapter {
 			this.userService.setTokenUpdateDate(token, new Date());
 		} catch (Exception e) {
 
-			LogAction log = new LogAction();
+			Action log = new Action();
 			log.put("message", "Error updating token date");
 
 			throw new UserDataAdapterException(log);
@@ -123,7 +123,7 @@ public class UserDataAdapter {
 		if (this.verificationService.containsAlias(alias)) {
 
 			if (this.verificationService.isWaitingForVerification(alias)) {
-				LogAction log = new LogAction();
+				Action log = new Action();
 				log.put("message", "User verification already exists");
 
 				throw new UserDataAdapterException(log);
@@ -173,7 +173,7 @@ public class UserDataAdapter {
 			return code;
 		}
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("message", "User verification already exists");
 
 		throw new UserDataAdapterException(log);
@@ -191,7 +191,7 @@ public class UserDataAdapter {
 			this.verificationService.setNewPasswordByEmail(email, newPassword);
 			this.verificationService.setResetRequestByEmail(email);
 		} else {
-			LogAction log = new LogAction();
+			Action log = new Action();
 			log.put("cause", "not enough identifiers");
 			throw new UserDataAdapterException(log);
 		}
@@ -207,7 +207,7 @@ public class UserDataAdapter {
 			this.verificationService.setNewPasswordByEmail(email, SHA1.encode(newPassword));
 			this.verificationService.setChangePasswordRequestByEmail(email);
 		} else {
-			LogAction log = new LogAction();
+			Action log = new Action();
 			log.put("cause", "not enough identifiers");
 			throw new UserDataAdapterException(log);
 		}
@@ -344,7 +344,7 @@ public class UserDataAdapter {
 			return entry;
 		}
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("message", "Alias does not exist");
 		log.put("alias", alias);
 
@@ -360,7 +360,7 @@ public class UserDataAdapter {
 			return entry;
 		}
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("message", "Email does not exist");
 		log.put("alias", email);
 
@@ -375,7 +375,7 @@ public class UserDataAdapter {
 			return entry;
 		}
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("message", "Code does not exist");
 		log.put("code", code);
 
@@ -391,7 +391,7 @@ public class UserDataAdapter {
 			return entries;
 		}
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("message", "There are no remaining verifications");
 
 		throw new UserDataAdapterException(log);
@@ -406,7 +406,7 @@ public class UserDataAdapter {
 			return entries;
 		}
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("message", "There are no pending reset requests");
 
 		throw new UserDataAdapterException(log);
@@ -421,7 +421,7 @@ public class UserDataAdapter {
 			return entries;
 		}
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("message", "There are no pending change password requests");
 
 		throw new UserDataAdapterException(log);
@@ -436,7 +436,7 @@ public class UserDataAdapter {
 			return entries;
 		}
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("message", "There are no waiting reset requests");
 
 		throw new UserDataAdapterException(log);
@@ -451,7 +451,7 @@ public class UserDataAdapter {
 			return entries;
 		}
 
-		LogAction log = new LogAction();
+		Action log = new Action();
 		log.put("message", "There are no waiting change password requests");
 
 		throw new UserDataAdapterException(log);

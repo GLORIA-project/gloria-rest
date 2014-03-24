@@ -8,8 +8,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response.Status;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import com.sun.jersey.spi.container.ContainerRequest;
@@ -21,8 +19,9 @@ import eu.gloria.gs.services.api.data.dbservices.UserEntry;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.repository.user.UserRepositoryException;
 import eu.gloria.gs.services.repository.user.UserRepositoryInterface;
+import eu.gloria.gs.services.utils.LoggerEntity;
 
-public class AuthFilter implements ContainerRequestFilter {
+public class AuthFilter extends LoggerEntity implements ContainerRequestFilter {
 
 	private static UserRepositoryInterface userRepository = null;
 
@@ -30,8 +29,9 @@ public class AuthFilter implements ContainerRequestFilter {
 	private static String adminPassword;
 	private static UserDataAdapter userAdapter;
 
-	private static Logger log = LoggerFactory.getLogger(AuthFilter.class
-			.getSimpleName());
+	public AuthFilter() {
+		super(AuthFilter.class.getSimpleName());
+	}
 
 	static {
 
