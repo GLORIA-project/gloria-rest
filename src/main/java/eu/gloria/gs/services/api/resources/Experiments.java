@@ -126,7 +126,8 @@ public class Experiments extends GResource {
 		this.setupRegularAuthorization(request);
 
 		try {
-			List<String> names = experiments.getAllExperiments(ExperimentType.ONLINE);
+			List<String> names = experiments
+					.getAllExperiments(ExperimentType.ONLINE);
 
 			return this.processSuccess(names);
 
@@ -143,7 +144,8 @@ public class Experiments extends GResource {
 		this.setupRegularAuthorization(request);
 
 		try {
-			List<String> names = experiments.getAllExperiments(ExperimentType.OFFLINE);
+			List<String> names = experiments
+					.getAllExperiments(ExperimentType.OFFLINE);
 
 			return this.processSuccess(names);
 
@@ -643,6 +645,8 @@ public class Experiments extends GResource {
 			return this.processError(Status.BAD_REQUEST, e);
 		} catch (InvalidUserContextException e) {
 			return this.processError(Status.FORBIDDEN, e);
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
@@ -983,8 +987,7 @@ public class Experiments extends GResource {
 
 		} catch (ExperimentException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
-		} catch (NoSuchOperationException | NoSuchExperimentException
-				| NoSuchReservationException e) {
+		} catch (NoSuchOperationException | NoSuchReservationException e) {
 			return this.processError(Status.NOT_FOUND, e);
 		} catch (ExperimentNotInstantiatedException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
