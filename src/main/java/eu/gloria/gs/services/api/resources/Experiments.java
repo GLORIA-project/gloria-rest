@@ -57,8 +57,6 @@ import eu.gloria.gs.services.experiment.base.reservation.NoSuchReservationExcept
 import eu.gloria.gs.services.experiment.script.NoSuchScriptException;
 import eu.gloria.gs.services.experiment.script.OverlapRTScriptException;
 import eu.gloria.gs.services.experiment.script.data.RTScriptInformation;
-import eu.gloria.gs.services.repository.rt.RTRepositoryException;
-import eu.gloria.gs.services.repository.rt.RTRepositoryInterface;
 import eu.gloria.gs.services.repository.user.InvalidUserException;
 import eu.gloria.gs.services.utils.ObjectResponse;
 
@@ -76,9 +74,6 @@ public class Experiments extends GResource {
 
 	private static ExperimentInterface experiments = GSClientProvider
 			.getOnlineExperimentClient();
-
-	private static RTRepositoryInterface rtRepository = GSClientProvider
-			.getRTRepositoryClient();
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -325,6 +320,7 @@ public class Experiments extends GResource {
 			timeSlot.setBegin(data.getBegin());
 			timeSlot.setEnd(data.getEnd());
 
+			/*
 			List<String> telescopes = data.getTelescopes();
 			for (String rt : telescopes) {
 				try {
@@ -335,7 +331,7 @@ public class Experiments extends GResource {
 				} catch (RTRepositoryException e) {
 					return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 				}
-			}
+			}*/
 
 			experiments.reserveExperiment(data.getExperiment(),
 					data.getTelescopes(), timeSlot);
@@ -674,7 +670,7 @@ public class Experiments extends GResource {
 					experiments.createOfflineExperiment(experiment);
 				} else if (data.getType().equals("online")) {
 					experiments.createOnlineExperiment(experiment);
-				} else {
+				} else {					
 					return this.processError(Status.BAD_REQUEST,
 							"experiment type",
 							"an experiment can only be online or offline");
@@ -999,7 +995,6 @@ public class Experiments extends GResource {
 	}
 
 	@DELETE
-	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{experiment}")
 	public Response deleteExperiment(@PathParam("experiment") String experiment) {
@@ -1395,7 +1390,6 @@ public class Experiments extends GResource {
 	}
 
 	@DELETE
-	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/scripts/id/{sid}")
 	public Response removeRTScript(@PathParam("sid") int sid) {

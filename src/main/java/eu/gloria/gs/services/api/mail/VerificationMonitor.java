@@ -11,7 +11,6 @@ import eu.gloria.gs.services.core.LogStore;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.core.tasks.ServerThread;
 import eu.gloria.gs.services.log.action.Action;
-import eu.gloria.gs.services.log.action.LogType;
 
 public class VerificationMonitor extends ServerThread {
 
@@ -53,6 +52,13 @@ public class VerificationMonitor extends ServerThread {
 
 	public void setMailSender(SendMailSSL mailSender) {
 		this.mailSender = mailSender;
+	}
+	
+	
+	@Override
+	public void end() {
+		GSClientProvider.clearCredentials();
+		super.end();
 	}
 
 	@Override

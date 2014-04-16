@@ -96,7 +96,7 @@ public abstract class GResource {
 
 		LinkedHashMap<String, Object> errorData = new LinkedHashMap<>();
 		errorData.put("type", errorName);
-		errorData.put("description", message);
+		errorData.put("exception", message);
 
 		return Response.status(status).entity(errorData)
 				.type(MediaType.APPLICATION_JSON).build();
@@ -104,14 +104,13 @@ public abstract class GResource {
 
 	protected Response processError(Status status, ActionException e) {
 
-		LinkedHashMap<String, Object> errorData = new LinkedHashMap<>();
-		//errorData.put("type", e.getClass().getSimpleName());
+//		LinkedHashMap<String, Object> errorData = new LinkedHashMap<>();
 		String messageStr = e.getMessage();
 		Object message = JSONConverter.fromJSON(messageStr,
 				LinkedHashMap.class, null);
-		errorData.put("description", message);
+//		errorData.put("exception", message);
 
-		return Response.status(status).entity(errorData)
+		return Response.status(status).entity(message)
 				.type(MediaType.APPLICATION_JSON).build();
 	}
 
