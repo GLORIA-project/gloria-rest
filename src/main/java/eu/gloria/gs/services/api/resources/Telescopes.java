@@ -5,6 +5,7 @@
  */
 package eu.gloria.gs.services.api.resources;
 
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import eu.gloria.gs.services.repository.rt.data.DeviceInformation;
 import eu.gloria.gs.services.repository.rt.data.DeviceType;
 import eu.gloria.gs.services.repository.rt.data.RTAvailability;
 import eu.gloria.gs.services.repository.rt.data.RTInformation;
+import eu.gloria.gs.services.utils.JSONConverter;
 
 /**
  * @author Fernando Serena (fserena@ciclope.info)
@@ -295,7 +297,7 @@ public class Telescopes extends GResource {
 			telescopes.setRTImage(name,
 					(String) JSONConverter.fromJSON(image, String.class, null));
 			return this.processSuccess();
-		} catch (RTRepositoryException e) {
+		} catch (RTRepositoryException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
@@ -313,7 +315,7 @@ public class Telescopes extends GResource {
 			telescopes.setRTDescription(name, (String) JSONConverter.fromJSON(
 					description, String.class, null));
 			return this.processSuccess();
-		} catch (RTRepositoryException e) {
+		} catch (RTRepositoryException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}

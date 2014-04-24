@@ -5,6 +5,7 @@
  */
 package eu.gloria.gs.services.api.resources;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedHashMap;
@@ -58,6 +59,7 @@ import eu.gloria.gs.services.experiment.script.NoSuchScriptException;
 import eu.gloria.gs.services.experiment.script.OverlapRTScriptException;
 import eu.gloria.gs.services.experiment.script.data.RTScriptInformation;
 import eu.gloria.gs.services.repository.user.InvalidUserException;
+import eu.gloria.gs.services.utils.JSONConverter;
 import eu.gloria.gs.services.utils.ObjectResponse;
 
 /**
@@ -481,7 +483,7 @@ public class Experiments extends GResource {
 			return this.processSuccess(JSONConverter.fromJSON(
 					(String) response.content, Object.class, null));
 
-		} catch (ExperimentException e) {
+		} catch (ExperimentException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchReservationException | NoSuchParameterException e) {
 			return this.processError(Status.NOT_FOUND, e);
@@ -573,7 +575,7 @@ public class Experiments extends GResource {
 
 			return this.processSuccess(value);
 
-		} catch (ExperimentException | ExperimentParameterException e) {
+		} catch (ExperimentException | ExperimentParameterException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException | NoSuchReservationException
 				| NoSuchParameterException e) {
@@ -612,7 +614,7 @@ public class Experiments extends GResource {
 					castedValue = JSONConverter.toJSON(data);
 				}
 			}
-		} catch (ExperimentException | NoSuchExperimentException e) {
+		} catch (ExperimentException | NoSuchExperimentException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (InvalidUserContextException e) {
 			return this.processError(Status.FORBIDDEN, e);
@@ -646,7 +648,7 @@ public class Experiments extends GResource {
 		}
 	}
 
-	private String[] generateStringArgs(Object args) {
+	private String[] generateStringArgs(Object args) throws IOException {
 		String[] argStr = new String[1];
 
 		argStr[0] = JSONConverter.toJSON(args);
@@ -706,7 +708,7 @@ public class Experiments extends GResource {
 
 			return this.processSuccess();
 
-		} catch (ExperimentException e) {
+		} catch (ExperimentException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
 			return this.processError(Status.NOT_FOUND, e);
@@ -777,7 +779,7 @@ public class Experiments extends GResource {
 
 			return this.processSuccess(exp);
 
-		} catch (ExperimentException e) {
+		} catch (ExperimentException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
 			return this.processError(Status.NOT_FOUND, e);
@@ -873,7 +875,7 @@ public class Experiments extends GResource {
 
 			return this.processSuccess(parameters);
 
-		} catch (ExperimentException e) {
+		} catch (ExperimentException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
 			return this.processError(Status.NOT_FOUND, e);
@@ -1040,7 +1042,7 @@ public class Experiments extends GResource {
 
 			return this.processSuccess();
 
-		} catch (ExperimentException e) {
+		} catch (ExperimentException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException e) {
 			return this.processError(Status.NOT_FOUND, e);
@@ -1231,7 +1233,7 @@ public class Experiments extends GResource {
 
 			return this.processSuccess(results);
 
-		} catch (ExperimentException e) {
+		} catch (ExperimentException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
@@ -1272,7 +1274,7 @@ public class Experiments extends GResource {
 
 			return this.processSuccess(results);
 
-		} catch (ExperimentException e) {
+		} catch (ExperimentException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (ExperimentNotInstantiatedException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
@@ -1302,7 +1304,7 @@ public class Experiments extends GResource {
 
 			return this.processSuccess(sid);
 
-		} catch (ExperimentException e) {
+		} catch (ExperimentException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException | OverlapRTScriptException e) {
 			return this.processError(Status.BAD_REQUEST, e);
@@ -1336,7 +1338,7 @@ public class Experiments extends GResource {
 
 			return this.processSuccess(allScripts);
 
-		} catch (ExperimentException e) {
+		} catch (ExperimentException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchScriptException e) {
 			return this.processError(Status.NOT_FOUND, e);
@@ -1382,7 +1384,7 @@ public class Experiments extends GResource {
 
 			return this.processSuccess(scriptInfo);
 
-		} catch (ExperimentException e) {
+		} catch (ExperimentException | IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchScriptException e) {
 			return this.processError(Status.NOT_FOUND, e);

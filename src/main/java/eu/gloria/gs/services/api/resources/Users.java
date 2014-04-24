@@ -5,6 +5,7 @@
  */
 package eu.gloria.gs.services.api.resources;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +30,7 @@ import eu.gloria.gs.services.log.action.Action;
 import eu.gloria.gs.services.repository.user.UserRepositoryException;
 import eu.gloria.gs.services.repository.user.UserRepositoryInterface;
 import eu.gloria.gs.services.repository.user.data.UserInformation;
+import eu.gloria.gs.services.utils.JSONConverter;
 
 /**
  * @author Fernando Serena (fserena@ciclope.info)
@@ -100,7 +102,7 @@ public class Users extends GResource {
 			String token = userAdapter.createToken(user, password, language,
 					userAgent, remote);
 			return Response.ok(JSONConverter.toJSON(token)).build();
-		} catch (UserDataAdapterException e) {
+		} catch (UserDataAdapterException | IOException e) {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}
@@ -117,7 +119,7 @@ public class Users extends GResource {
 		try {
 			UserInformation userInfo = users.getUserInformation(user);
 			return Response.ok(JSONConverter.toJSON(userInfo)).build();
-		} catch (UserRepositoryException e) {
+		} catch (UserRepositoryException | IOException e) {
 			return Response.serverError().entity(e.getMessage()).build();
 		}
 	}

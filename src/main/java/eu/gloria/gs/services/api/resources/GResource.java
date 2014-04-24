@@ -5,6 +5,7 @@
  */
 package eu.gloria.gs.services.api.resources;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
@@ -17,7 +18,7 @@ import org.springframework.context.ApplicationContext;
 
 import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
-import eu.gloria.gs.services.log.action.ActionException;
+import eu.gloria.gs.services.utils.JSONConverter;
 
 /**
  * @author Fernando Serena (fserena@ciclope.info)
@@ -102,13 +103,16 @@ public abstract class GResource {
 				.type(MediaType.APPLICATION_JSON).build();
 	}
 
-	protected Response processError(Status status, ActionException e) {
+	protected Response processError(Status status, Exception e) {
 
-//		LinkedHashMap<String, Object> errorData = new LinkedHashMap<>();
 		String messageStr = e.getMessage();
-		Object message = JSONConverter.fromJSON(messageStr,
-				LinkedHashMap.class, null);
-//		errorData.put("exception", message);
+		Object message;
+		try {
+			message = JSONConverter.fromJSON(messageStr,
+					LinkedHashMap.class, null);
+		} catch (IOException e1) {
+			message = e1.getMessage();
+		}
 
 		return Response.status(status).entity(message)
 				.type(MediaType.APPLICATION_JSON).build();
@@ -117,7 +121,11 @@ public abstract class GResource {
 	protected Response processSuccess(Object data) {
 
 		if (data instanceof String) {
-			data = JSONConverter.toJSON(data);
+			try {
+				data = JSONConverter.toJSON(data);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		return Response.ok(data).type(MediaType.APPLICATION_JSON).build();
 	}
