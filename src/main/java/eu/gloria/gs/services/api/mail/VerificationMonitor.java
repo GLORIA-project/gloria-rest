@@ -57,7 +57,7 @@ public class VerificationMonitor extends ServerThread {
 	
 	@Override
 	public void end() {
-		GSClientProvider.clearCredentials();
+//		GSClientProvider.clearCredentials();
 		super.end();
 	}
 

@@ -7,8 +7,8 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>war</packaging>
 
-	<name>GloriAPI</name>
-	<url>http://maven.apache.org</url>
+	<name>GLORIA REST API</name>
+	<url>users.gloria-project.eu</url>
 
 	<dependencies>
 		<dependency>
