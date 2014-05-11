@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -312,6 +313,50 @@ public class Experiments extends GResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/online/slots/available/{year}/{month}/{day}/{dh}")
+	public Response listAvailableTimeSlots(@PathParam("year") String year,
+			@PathParam("month") String month, @PathParam("day") String day,
+			@PathParam("dh") int dh, ListAvailableTimeSlotsRequest data) {
+
+		this.setupRegularAuthorization(request);
+
+		if (dh > 12 || dh < -12) {
+			return this.processError(Status.NOT_ACCEPTABLE, "Argument error",
+					"dh is not valid");
+		}
+
+		try {
+			List<TimeSlot> timeSlots = experiments.getAvailableReservations(
+					data.getExperiment(), data.getTelescopes());
+
+			Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+			List<TimeSlot> filteredTimeSlots = new ArrayList<TimeSlot>();
+			
+			for (TimeSlot timeSlot : timeSlots) {
+				calendar.setTime(timeSlot.getBegin());
+				int slotHour = calendar.get(Calendar.HOUR_OF_DAY);
+				calendar.set(Calendar.HOUR_OF_DAY, slotHour - dh);
+
+				if (calendar.get(Calendar.DAY_OF_MONTH) == Integer.valueOf(day)
+						&& calendar.get(Calendar.MONTH) == Integer
+								.valueOf(month)
+						&& calendar.get(Calendar.YEAR) == Integer.valueOf(year)) {
+
+					filteredTimeSlots.add(timeSlot);
+				}
+			}
+
+			return this.processSuccess(filteredTimeSlots);
+		} catch (ExperimentException e) {
+			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
+		} catch (ExperimentReservationArgumentException e) {
+			return this.processError(Status.NOT_ACCEPTABLE, e);
+		}
+	}
+
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/online/reserve")
 	public Response reserveExperiment(ReserveOnlineExperimentRequest data) {
 
@@ -321,19 +366,6 @@ public class Experiments extends GResource {
 			TimeSlot timeSlot = new TimeSlot();
 			timeSlot.setBegin(data.getBegin());
 			timeSlot.setEnd(data.getEnd());
-
-			/*
-			List<String> telescopes = data.getTelescopes();
-			for (String rt : telescopes) {
-				try {
-					if (!rtRepository.containsRT(rt)) {
-						return this.processError(Status.NOT_ACCEPTABLE,
-								"wrong telescopes", rt + " is not a telescope");
-					}
-				} catch (RTRepositoryException e) {
-					return this.processError(Status.INTERNAL_SERVER_ERROR, e);
-				}
-			}*/
 
 			experiments.reserveExperiment(data.getExperiment(),
 					data.getTelescopes(), timeSlot);
@@ -575,7 +607,8 @@ public class Experiments extends GResource {
 
 			return this.processSuccess(value);
 
-		} catch (ExperimentException | ExperimentParameterException | IOException e) {
+		} catch (ExperimentException | ExperimentParameterException
+				| IOException e) {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		} catch (NoSuchExperimentException | NoSuchReservationException
 				| NoSuchParameterException e) {
@@ -672,7 +705,7 @@ public class Experiments extends GResource {
 					experiments.createOfflineExperiment(experiment);
 				} else if (data.getType().equals("online")) {
 					experiments.createOnlineExperiment(experiment);
-				} else {					
+				} else {
 					return this.processError(Status.BAD_REQUEST,
 							"experiment type",
 							"an experiment can only be online or offline");

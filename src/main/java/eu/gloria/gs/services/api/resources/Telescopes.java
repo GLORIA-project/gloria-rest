@@ -72,7 +72,7 @@ public class Telescopes extends GResource {
 	@Path("/list")
 	public Response getAllTelescopes() {
 
-		this.setupRegularAuthorization(request);
+		this.setupPublicAuthorization();
 
 		try {
 			List<String> completeNames = new ArrayList<>();
