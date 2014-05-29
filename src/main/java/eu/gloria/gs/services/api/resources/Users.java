@@ -20,6 +20,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.sun.jersey.spi.resource.Singleton;
+
 import eu.gloria.gs.services.api.data.EmailValidator;
 import eu.gloria.gs.services.api.data.PasswordValidator;
 import eu.gloria.gs.services.api.data.UserDataAdapter;
@@ -36,9 +38,13 @@ import eu.gloria.gs.services.utils.JSONConverter;
  * @author Fernando Serena (fserena@ciclope.info)
  * 
  */
-
+@Singleton
 @Path("/users")
 public class Users extends GResource {
+
+	public Users() {
+		super(Users.class.getSimpleName());
+	}
 
 	@Context
 	HttpServletRequest request;
@@ -66,8 +72,8 @@ public class Users extends GResource {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/authenticate")
-	public Response authenticateUser(@QueryParam("verify") boolean verify) {
-
+	public Response authenticateUser(@QueryParam("verify") boolean verify) {		
+		
 		if (verify) {
 			return Response.ok(new ArrayList<>()).build();
 		}
@@ -80,7 +86,7 @@ public class Users extends GResource {
 		String userAgent = (String) request.getAttribute("agent");
 		String remote = (String) request.getAttribute("remote");
 		String language = (String) request.getAttribute("language");
-
+		
 		try {
 
 			List<UserEntry> activeSessions = userAdapter

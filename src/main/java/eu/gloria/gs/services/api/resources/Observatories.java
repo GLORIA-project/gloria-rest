@@ -19,6 +19,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.sun.jersey.spi.resource.Singleton;
+
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.repository.rt.RTRepositoryException;
 import eu.gloria.gs.services.repository.rt.RTRepositoryInterface;
@@ -29,8 +31,13 @@ import eu.gloria.gs.services.repository.rt.data.ObservatoryInformation;
  * 
  */
 
+@Singleton
 @Path("/observatories")
 public class Observatories extends GResource {
+
+	public Observatories() {
+		super(Observatories.class.getSimpleName());
+	}
 
 	@Context
 	HttpServletRequest request;

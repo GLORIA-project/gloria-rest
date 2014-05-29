@@ -1,5 +1,6 @@
 package eu.gloria.gs.services.api.security;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
@@ -17,8 +18,10 @@ import eu.gloria.gs.services.api.data.UserDataAdapter;
 import eu.gloria.gs.services.api.data.dbservices.UserDataAdapterException;
 import eu.gloria.gs.services.api.data.dbservices.UserEntry;
 import eu.gloria.gs.services.core.client.GSClientProvider;
+import eu.gloria.gs.services.log.action.Action;
 import eu.gloria.gs.services.repository.user.UserRepositoryException;
 import eu.gloria.gs.services.repository.user.UserRepositoryInterface;
+import eu.gloria.gs.services.utils.JSONConverter;
 import eu.gloria.gs.services.utils.LoggerEntity;
 
 public class AuthFilter extends LoggerEntity implements ContainerRequestFilter {
@@ -72,16 +75,23 @@ public class AuthFilter extends LoggerEntity implements ContainerRequestFilter {
 			throw new WebApplicationException(Status.OK);
 		}
 
+		Action action = new Action();
+
+		action.put("method", method);
+
 		// Get the authentification passed in HTTP headers parameters
 		String auth = containerRequest.getHeaderValue("authorization");
 
 		GSClientProvider.setCredentials("dummy", "neh");
 
-		if (auth != null) {
+		String userAgent = sr.getHeader(ContainerRequest.USER_AGENT);
+		String remote = sr.getRemoteAddr();
+		String language = sr.getLocale().getLanguage();
 
-			String userAgent = sr.getHeader(ContainerRequest.USER_AGENT);
-			String remote = sr.getRemoteAddr();
-			String language = sr.getLocale().getLanguage();
+		action.put("remote", remote);
+		action.put("request", sr.getRequestURI());
+
+		if (auth != null) {
 
 			if (userAgent == null) {
 				userAgent = "";
@@ -92,10 +102,12 @@ public class AuthFilter extends LoggerEntity implements ContainerRequestFilter {
 
 			// If login or password fail
 			if (lap == null || lap.length != 2) {
+				action.put("auth", "unauthorized");
 				throw new WebApplicationException(Status.UNAUTHORIZED);
 			}
 
 			if (lap[0].equals("public") && lap[1].equals("public")) {
+				action.put("auth", "public");
 				return containerRequest;
 			}
 
@@ -103,15 +115,15 @@ public class AuthFilter extends LoggerEntity implements ContainerRequestFilter {
 			String name = null;
 			String actualPassword = null;
 
-			try {
+			try {				
 				entry = userAdapter.getUserInformationByToken(lap[1]);
 			} catch (UserDataAdapterException e) {
 			}
 
 			boolean authenticated = false;
-
+			
 			if (entry != null && entry.getActive() > 0) {
-
+				action.put("token", lap[1]);
 				if (new Date().getTime() - entry.getTokenUpdateDate().getTime() < 10800000) {
 					name = entry.getName();
 					actualPassword = entry.getPassword();
@@ -121,8 +133,8 @@ public class AuthFilter extends LoggerEntity implements ContainerRequestFilter {
 					} catch (UserDataAdapterException e) {
 						log.error(e.getMessage());
 					}
-				} else {
-					userAdapter.deactivateToken(entry.getToken());
+				} else {					
+					userAdapter.deactivateToken(entry.getToken());					
 				}
 			}
 
@@ -139,7 +151,7 @@ public class AuthFilter extends LoggerEntity implements ContainerRequestFilter {
 							throw new WebApplicationException(
 									Status.UNAUTHORIZED);
 						} else {
-							actualPassword = lap[1];
+							actualPassword = lap[1];							
 						}
 					}
 
@@ -180,9 +192,12 @@ public class AuthFilter extends LoggerEntity implements ContainerRequestFilter {
 
 						userAdapter.activateToken(token);
 						userAdapter.deactivateOtherTokens(name, token);
+						
+						action.put("new-token", token);
 
 					} else {
 						userAdapter.updateLastDate(actives.get(0).getToken());
+						action.put("token", actives.get(0).getToken());
 					}
 
 					sr.setAttribute("agent", userAgent);
@@ -199,9 +214,36 @@ public class AuthFilter extends LoggerEntity implements ContainerRequestFilter {
 			sr.setAttribute("language", language);
 
 			sr.setAttribute("user", name);
+			action.put("user", name);
 			sr.setAttribute("password", actualPassword);
+		} else {
+			action.put("auth", "empty");
 		}
 
+		info(action);
+		
 		return containerRequest;
+	}
+	
+	private void info(Action action) {
+		String message = stringifyAction(action);
+		if (message != null)
+			log.info(message);
+	}
+	
+	private void error(Action action) {
+		String message = stringifyAction(action);
+		if (message != null)
+			log.error(message);
+	}
+	
+	private String stringifyAction(Action action) {
+		try {
+			return JSONConverter.toJSON(action);
+		} catch (IOException e) {
+			log.error("stringifying json");
+		}
+		
+		return null;
 	}
 }

@@ -57,6 +57,10 @@ import eu.gloria.gs.services.teleoperation.weather.WeatherTeleoperationInterface
 @Path("/teleoperation")
 public class Teleoperation extends GResource {
 
+	public Teleoperation() {
+		super(Teleoperation.class.getSimpleName());
+	}
+
 	@Context
 	HttpServletRequest request;
 
@@ -87,39 +91,44 @@ public class Teleoperation extends GResource {
 		this.setupPublicAuthorization();
 
 		try {
-			
-			List<String> rtDeviceNames = telescopes.getRTDeviceNames(rt, DeviceType.WIND_SPEED_SENSOR);
+
+			boolean alarm = weathers.isOnWeatherAlarm(rt);
+
+			List<String> rtDeviceNames = telescopes.getRTDeviceNames(rt,
+					DeviceType.WIND_SPEED_SENSOR);
 			String name = null;
 			if (rtDeviceNames != null && rtDeviceNames.size() > 0) {
 				name = rtDeviceNames.get(0);
 			}
-			
+
 			LinkedHashMap<String, Object> weather = new LinkedHashMap<String, Object>();
-			
+			weather.put("alarm", alarm);
+
 			if (name != null) {
-				boolean alarm = weathers.isWindOnAlarm(rt, name);
+				alarm = weathers.isWindOnAlarm(rt, name);
 				double value = weathers.getWindSpeed(rt, name);
 				LinkedHashMap<String, Object> response = new LinkedHashMap<String, Object>();
 				response.put("value", value);
 				response.put("alarm", alarm);
 				weather.put("wind", response);
 			}
-			
-			rtDeviceNames = telescopes.getRTDeviceNames(rt, DeviceType.RH_SENSOR);
+
+			rtDeviceNames = telescopes.getRTDeviceNames(rt,
+					DeviceType.RH_SENSOR);
 			name = null;
 			if (rtDeviceNames != null && rtDeviceNames.size() > 0) {
 				name = rtDeviceNames.get(0);
 			}
-			
+
 			if (name != null) {
-				boolean alarm = weathers.isRHOnAlarm(rt, name);
+				alarm = weathers.isRHOnAlarm(rt, name);
 				double value = weathers.getRelativeHumidity(rt, name);
 				LinkedHashMap<String, Object> response = new LinkedHashMap<String, Object>();
 				response.put("value", value);
 				response.put("alarm", alarm);
 				weather.put("rh", response);
 			}
-			
+
 			return this.processSuccess(weather);
 		} catch (WeatherTeleoperationException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
@@ -129,7 +138,7 @@ public class Teleoperation extends GResource {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
-	
+
 	@GET
 	@Path("/weather/pressure/{rt}/{barometer}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -527,7 +536,7 @@ public class Teleoperation extends GResource {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
-	
+
 	@GET
 	@Path("/scam/url/{rt}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -536,12 +545,13 @@ public class Teleoperation extends GResource {
 		this.setupPublicAuthorization();
 
 		try {
-			List<String> rtDeviceNames = telescopes.getRTDeviceNames(rt, DeviceType.SURVEILLANCE_CAMERA);
+			List<String> rtDeviceNames = telescopes.getRTDeviceNames(rt,
+					DeviceType.SURVEILLANCE_CAMERA);
 			String name = null;
 			if (rtDeviceNames != null && rtDeviceNames.size() > 0) {
 				name = rtDeviceNames.get(0);
 			}
-			
+
 			String url = scams.getImageURL(rt, name);
 
 			return this.processSuccess(url);
@@ -678,7 +688,7 @@ public class Teleoperation extends GResource {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
-	
+
 	@GET
 	@Path("/mount/status/{rt}")
 	public Response getMountStatus(@PathParam("rt") String rt) {
@@ -686,14 +696,16 @@ public class Teleoperation extends GResource {
 		this.setupPublicAuthorization();
 
 		try {
-			
-			List<String> rtDeviceNames = telescopes.getRTDeviceNames(rt, DeviceType.MOUNT);
+
+			List<String> rtDeviceNames = telescopes.getRTDeviceNames(rt,
+					DeviceType.MOUNT);
 			String name = null;
+			MountState state = MountState.UNDEFINED;
 			if (rtDeviceNames != null && rtDeviceNames.size() > 0) {
 				name = rtDeviceNames.get(0);
+				state = mounts.getState(rt, name);
 			}
-						
-			MountState state = mounts.getState(rt, name);
+
 			LinkedHashMap<String, Object> stateResult = new LinkedHashMap<String, Object>();
 			stateResult.put("state", state.name());
 
@@ -706,7 +718,7 @@ public class Teleoperation extends GResource {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
 	}
-	
+
 	@GET
 	@Path("/dome/status/{rt}/{dome}")
 	public Response getDomeStatus(@PathParam("rt") String rt,
@@ -726,7 +738,7 @@ public class Teleoperation extends GResource {
 			return this.processError(Status.INTERNAL_SERVER_ERROR, e);
 		}
 	}
-	
+
 	@GET
 	@Path("/dome/status/{rt}")
 	public Response getDomeStatus(@PathParam("rt") String rt) {
@@ -734,14 +746,16 @@ public class Teleoperation extends GResource {
 		this.setupPublicAuthorization();
 
 		try {
-			
-			List<String> rtDeviceNames = telescopes.getRTDeviceNames(rt, DeviceType.DOME);
+
+			List<String> rtDeviceNames = telescopes.getRTDeviceNames(rt,
+					DeviceType.DOME);
 			String name = null;
-			if (rtDeviceNames.size() > 0) {
+			DomeOpeningState state = DomeOpeningState.UNDEFINED;
+			if (rtDeviceNames != null && rtDeviceNames.size() > 0) {
 				name = rtDeviceNames.get(0);
+				state = domes.getState(rt, name);
 			}
-						
-			DomeOpeningState state = domes.getState(rt, name);
+
 			LinkedHashMap<String, Object> stateResult = new LinkedHashMap<String, Object>();
 			stateResult.put("state", state.name());
 

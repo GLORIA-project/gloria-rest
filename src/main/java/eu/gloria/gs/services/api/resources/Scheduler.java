@@ -40,6 +40,10 @@ import eu.gloria.gs.services.scheduler.data.ScheduleNotFoundException;
 @Path("/scheduler")
 public class Scheduler extends GResource {
 
+	public Scheduler() {
+		super(Scheduler.class.getSimpleName());
+	}
+
 	@Context
 	HttpServletRequest request;
 

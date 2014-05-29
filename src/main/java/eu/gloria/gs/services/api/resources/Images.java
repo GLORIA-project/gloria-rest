@@ -37,6 +37,10 @@ import eu.gloria.gs.services.repository.image.data.ImageInformation;
 @Path("/images")
 public class Images extends GResource {
 
+	public Images() {
+		super(Images.class.getSimpleName());
+	}
+
 	@Context
 	HttpServletRequest request;
 

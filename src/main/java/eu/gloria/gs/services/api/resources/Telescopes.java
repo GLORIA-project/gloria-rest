@@ -27,6 +27,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.sun.jersey.spi.resource.Singleton;
+
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.repository.rt.RTRepositoryException;
 import eu.gloria.gs.services.repository.rt.RTRepositoryInterface;
@@ -40,8 +42,13 @@ import eu.gloria.gs.services.utils.JSONConverter;
  * @author Fernando Serena (fserena@ciclope.info)
  * 
  */
+@Singleton
 @Path("/telescopes")
 public class Telescopes extends GResource {
+
+	public Telescopes() {
+		super(Telescopes.class.getSimpleName());
+	}
 
 	@Context
 	HttpServletRequest request;

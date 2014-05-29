@@ -30,6 +30,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.sun.jersey.spi.resource.Singleton;
+
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.experiment.ExperimentException;
 import eu.gloria.gs.services.experiment.ExperimentInterface;
@@ -67,8 +69,13 @@ import eu.gloria.gs.services.utils.ObjectResponse;
  * @author Fernando Serena (fserena@ciclope.info)
  * 
  */
+@Singleton
 @Path("/experiments")
 public class Experiments extends GResource {
+
+	public Experiments() {
+		super(Experiments.class.getSimpleName());
+	}
 
 	@Context
 	HttpServletRequest request;
@@ -273,7 +280,7 @@ public class Experiments extends GResource {
 		}
 	}
 
-	@POST
+	/*@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/online/slots/available/{year}/{month}/{day}")
@@ -308,7 +315,7 @@ public class Experiments extends GResource {
 		} catch (ExperimentReservationArgumentException e) {
 			return this.processError(Status.NOT_ACCEPTABLE, e);
 		}
-	}
+	}*/
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -328,7 +335,7 @@ public class Experiments extends GResource {
 		try {
 			List<TimeSlot> timeSlots = experiments.getAvailableReservations(
 					data.getExperiment(), data.getTelescopes());
-
+			
 			Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 			List<TimeSlot> filteredTimeSlots = new ArrayList<TimeSlot>();
 			

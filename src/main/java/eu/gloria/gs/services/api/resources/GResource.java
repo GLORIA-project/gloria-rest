@@ -19,12 +19,17 @@ import org.springframework.context.ApplicationContext;
 import eu.gloria.gs.services.api.security.ApplicationContextProvider;
 import eu.gloria.gs.services.core.client.GSClientProvider;
 import eu.gloria.gs.services.utils.JSONConverter;
+import eu.gloria.gs.services.utils.LoggerEntity;
 
 /**
  * @author Fernando Serena (fserena@ciclope.info)
  * 
  */
-public abstract class GResource {
+public abstract class GResource extends LoggerEntity {
+
+	protected GResource(String name) {
+		super(name);
+	}
 
 	private static String adminUsername;
 	private static String adminPassword;

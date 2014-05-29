@@ -34,6 +34,10 @@ import eu.gloria.gs.services.utils.ObjectResponse;
 @Path("/logs")
 public class ActionLog extends GResource {
 
+	public ActionLog() {
+		super(ActionLog.class.getSimpleName());
+	}
+
 	@Context
 	HttpServletRequest request;
 
